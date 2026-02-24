@@ -14,12 +14,31 @@ import styles from "../styles/userInterfaceStyles.js";
 const { width, height } = Dimensions.get("window");
 
 const UserInterface = ({ navigation }) => {
-  // Estado para rastrear qué examen está seleccionado (null: ninguno)
   const [selectedExam, setSelectedExam] = useState(null);
+  // Estado para los exámenes que vienen del Backend
+  const [exams, setExams] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const examTypes = ["IELTS", "ACT", "A Levels", "SAT", "TOEFL"];
+  // 1. Cargar exámenes al montar el componente
+  useEffect(() => {
+    fetchExams();
+  }, []);
 
-  // Definición de las sub-materias según el examen
+  const fetchExams = async () => {
+    try {
+      // Usamos 10.0.2.2 para emulador Android
+      const response = await axios.get(
+        "http://localhost:8081/api/exams/dashboard",
+      );
+      setExams(response.data);
+    } catch (error) {
+      console.error("Error al cargar exámenes:", error);
+      Alert.alert("Error", "No se pudieron cargar los exámenes disponibles.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const subCategories = {
     "A Levels": [
       { id: 1, name: "Math Tests", icon: require("../../assets/math.png") },
