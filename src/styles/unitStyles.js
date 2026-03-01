@@ -1,114 +1,154 @@
-import { StyleSheet } from "react-native";
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  header: {
-    height: 70,
-    backgroundColor: "#1c94a7c4",
+import { StyleSheet, Platform } from "react-native";
+
+export default StyleSheet.create({
+  // 1. CONTENEDOR PRINCIPAL
+  container: { 
+    flex: 1, 
+    backgroundColor: "#F4F7F8",
+    // En web, forzamos que ocupe toda la altura de la ventana
+    height: Platform.OS === 'web' ? '100vh' : '100%',
+  },
+
+  // 2. HEADER
+  header: { 
+    height: 80, 
+    backgroundColor: "#1c94a7", 
+    justifyContent: 'center', 
+    paddingHorizontal: 30,
+    zIndex: 100, // Asegura que el logo siempre esté arriba
+  },
+  logoText: { 
+    color: "#FFFFFF", 
+    fontSize: 36, 
+    fontFamily: "Cookie_400Regular" 
+  },
+  
+  // 3. LAYOUT DIVIDIDO (Sidebar + Contenido)
+  mainLayout: { 
+    flex: 1, 
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    height: Platform.OS === 'web' ? 'calc(100vh - 80px)' : '100%',
+  },
+  
+  // 4. SIDEBAR (Izquierda)
+  sidebar: { 
+    width: 300, 
+    backgroundColor: "#FFFFFF", 
+    padding: 20, 
+    borderRightWidth: 1, 
+    borderColor: "#E2E8F0",
+    // En web esto asegura que la sidebar no se mueva con el contenido
+    height: '100%',
+  },
+  courseTitle: { 
+    fontSize: 18, 
+    fontFamily: "Newsreader_700Bold", 
+    marginBottom: 20,
+    color: "#1A202C"
+  },
+  unitTab: { 
+    padding: 14, 
+    borderRadius: 10, 
+    marginBottom: 8 
+  },
+  unitTabActive: { 
+    backgroundColor: "#1c94a7" 
+  },
+  textActive: { 
+    color: "#FFFFFF", 
+    fontFamily: "Newsreader_400Regular",
+    fontWeight: "600"
+  },
+  textInactive: { 
+    color: "#5F6D7A", 
+    fontFamily: "Newsreader_400Regular" 
+  },
+
+  // 5. ÁREA DE LECTURA (Derecha)
+  contentArea: { 
+    flex: 1, 
+    backgroundColor: "#F4F7F8",
+    width: '100%',
+  },
+  scrollContent: { 
+    flexGrow: 1, 
+    alignItems: 'center', 
+    paddingVertical: 40,
     paddingHorizontal: 20,
   },
-  logoSmall: {
-    color: "#fff",
-    fontSize: 45,
-    fontWeight: "bold",
-    fontFamily: "Cookie_400Regular",
-  },
-  navLinks: { flexDirection: "row", gap: 15 },
-  navText: { color: "#fff", fontSize: 20, fontFamily: "Newsreader_400Regular" },
-  profilePlaceholder: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: "#fff",
+  
+  // 6. TARJETA DEL ARTÍCULO (El "Papel")
+  articleCard: { 
+    backgroundColor: "#FFFFFF", 
+    padding: 60, 
+    borderRadius: 20, 
+    width: '95%', 
+    // REEMPLAZO DE SOMBRAS: Usamos borde para evitar parpadeo de GPU
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
 
-  mainLayout: { flex: 1, flexDirection: "row" },
-
-  // Sidebar
-  sidebar: {
-    width: "25%",
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRightWidth: 1,
-    borderRightColor: "#eee",
+  articleTitle: { 
+    fontSize: 34, 
+    fontFamily: "Newsreader_700Bold", 
+    color: "#1A202C", 
+    marginBottom: 10 
   },
-  subjectTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    padding: 20,
-    marginBottom: 20,
-    color: "#000",
-    fontFamily: "Newsreader_400Bold",
-  },
-  unitButton: { padding: 12, borderRadius: 10, marginBottom: 10 },
-  unitButtonActive: { backgroundColor: "#1a8ea1" },
-  unitButtonInactive: { backgroundColor: "#e0e0e0" },
-  unitButtonText: {
-    fontSize: 20,
-    fontWeight: "500",
-    textAlign: "center",
-    fontFamily: "Newsreader_400Bold",
-  },
-  textWhite: { color: "#fff" },
-  textGrey: { color: "#555" },
-  downloadBtn: {
-    backgroundColor: "#bdbdbd",
-    padding: 15,
-    borderRadius: 20,
-    marginTop: 20,
-    alignItems: "center",
-  },
-  downloadBtnText: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#1b1b1b",
-    fontFamily: "Newsreader_400Regular",
+  blueBar: { 
+    height: 5, 
+    width: 80, 
+    backgroundColor: "#1c94a7", 
+    marginBottom: 35, 
+    borderRadius: 10 
   },
 
-  // Content Area
-  contentArea: { width: "65%", backgroundColor: "#fff" },
-  scrollContent: { padding: 25 },
-  unitTitle: {
-    fontSize: 26,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 30,
-    color: "#000",
-    fontFamily: "Newsreader_400Bold",
+  // 7. TEXTO DEL ARCHIVO .TXT
+  textWrapper: {
+    width: '100%',
   },
-  textContent: {
-    fontSize: 15,
-    lineHeight: 24,
-    color: "#333",
-    textAlign: "justify",
-    fontFamily: "Newsreader_400Regular",
-  },
-
-  actionContainer: { alignItems: "flex-end", marginTop: 40 },
-  checkKnowledgeBtn: {
-    backgroundColor: "#8da9a6",
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 20,
-  },
-  checkKnowledgeText: {
-    color: "#292929",
-    fontSize: 14,
-    fontFamily: "Newsreader_400Bold",
+  textContent: { 
+    fontSize: 20, 
+    lineHeight: 34, 
+    fontFamily: "Newsreader_400Regular", 
+    color: "#2D3748", 
+    textAlign: 'justify',
+    // CRÍTICO: Mantiene el formato de unit1.txt (listas, tabulaciones, etc)
+    ...Platform.select({
+      web: {
+        whiteSpace: 'pre-wrap',
+        wordBreak: 'break-word',
+      },
+      default: {
+        // En móvil React Native lo maneja distinto
+      }
+    })
   },
 
-  // FOOTER
-  footer: {
-    backgroundColor: "#4fd1d9",
-    padding: 50,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  // 8. BOTÓN DE KNOWLEDGE
+  knowledgeButton: { 
+    backgroundColor: "#1c94a7", 
+    paddingVertical: 18, 
+    paddingHorizontal: 35,
+    borderRadius: 50, 
+    alignSelf: 'center', 
+    marginTop: 60,
+    // Una sombra muy sutil que no afecta el rendimiento
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    elevation: 2,
   },
-  footerText: { fontSize: 12, color: "#333" },
-  socialIcons: { flexDirection: "row" },
-  icon: { width: 30, height: 30, marginLeft: 15 },
+  knowledgeButtonText: { 
+    color: "#FFFFFF", 
+    fontFamily: "Newsreader_700Bold", 
+    fontSize: 16 
+  },
+  
+  // 9. ESTADOS DE CARGA
+  loadingCenter: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    backgroundColor: "#F4F7F8"
+  }
 });
-export default styles;

@@ -1,11 +1,13 @@
-html,
-body,
-#root {
+html, body, #root {
   height: 100%;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
+  margin: 0;
+  padding: 0;
+  /* Evitamos que el navegador pelee con React */
+  overflow: hidden; 
 }
 
-* {
-  overscroll-behavior: auto !important;
+/* Solo permitimos scroll dentro de los componentes de React */
+#root {
+  display: flex;
+  flex-direction: column;
 }

@@ -1,194 +1,138 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  Dimensions,
-  Pressable,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useState, useEffect } from "react";
+import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator } from "react-native";
+import axios from "axios";
+import iconMap from "../components/icon"; 
 import styles from "../styles/userInterfaceStyles.js";
 
-const { width, height } = Dimensions.get("window");
-
 const UserInterface = ({ navigation }) => {
-  const [selectedExam, setSelectedExam] = useState(null);
-  // Estado para los exámenes que vienen del Backend
   const [exams, setExams] = useState([]);
+  const [selectedExam, setSelectedExam] = useState(null);
+  const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [networkError, setNetworkError] = useState(false);
 
-  // 1. Cargar exámenes al montar el componente
   useEffect(() => {
     fetchExams();
   }, []);
 
   const fetchExams = async () => {
     try {
-      // Usamos 10.0.2.2 para emulador Android
-      const response = await axios.get(
-        "http://localhost:8081/api/exams/dashboard",
-      );
-      setExams(response.data);
+      setNetworkError(false);
+      const response = await axios.get("http://localhost:8081/api/exams/dashboard");
+      if (Array.isArray(response.data)) {
+        setExams(response.data);
+      }
     } catch (error) {
-      console.error("Error al cargar exámenes:", error);
-      Alert.alert("Error", "No se pudieron cargar los exámenes disponibles.");
+      console.error("Error al traer exámenes:", error);
+      setNetworkError(true);
     } finally {
       setLoading(false);
     }
   };
 
-  const subCategories = {
-    "A Levels": [
-      { id: 1, name: "Math Tests", icon: require("../../assets/math.png") },
-      {
-        id: 2,
-        name: "Economy Tests",
-        icon: require("../../assets/economic.png"),
-      },
-      {
-        id: 3,
-        name: "English Tests",
-        icon: require("../../assets/travel.png"),
-      },
-    ],
-    TOEFL: [
-      { id: 1, name: "Reading", icon: require("../../assets/reading.png") },
-      { id: 2, name: "Speaking", icon: require("../../assets/person.png") },
-      { id: 3, name: "Writing", icon: require("../../assets/quill-pen.png") },
-      { id: 4, name: "Listening", icon: require("../../assets/listening.png") },
-      { id: 5, name: "Grammar", icon: require("../../assets/book.png") },
-    ],
-    // Puedes añadir arrays vacíos o genéricos para los demás por ahora
-    IELTS: [
-      { id: 1, name: "Reading", icon: require("../../assets/reading.png") },
-      { id: 2, name: "Speaking", icon: require("../../assets/person.png") },
-      { id: 3, name: "Writing", icon: require("../../assets/letter.png") },
-      { id: 4, name: "Grammar", icon: require("../../assets/book.png") },
-    ],
-    ACT: [
-      { id: 1, name: "Science", icon: require("../../assets/science.png") },
-      { id: 2, name: "Math", icon: require("../../assets/math.png") },
-      { id: 3, name: "English", icon: require("../../assets/person.png") },
-      { id: 4, name: "Writing", icon: require("../../assets/quill-pen.png") },
-      { id: 5, name: "Reading", icon: require("../../assets/reading.png") },
-    ],
-    SAT: [
-      {
-        id: 1,
-        name: "Reading & Writing",
-        icon: require("../../assets/letter.png"),
-      },
-      { id: 2, name: "Math", icon: require("../../assets/math.png") },
-    ],
+  const handleSelectExam = async (exam) => {
+    if (!exam || !exam.id) return; // Cambiado a .id
+    
+    setSelectedExam(exam);
+    setCourses([]);
+
+    try {
+      const response = await axios.get(`http://localhost:8081/api/exams/${exam.id}`); // Cambiado a .id
+      if (Array.isArray(response.data)) {
+        setCourses(response.data);
+      }
+    } catch (error) {
+      console.error("Error al traer cursos:", error);
+    }
   };
 
+  if (loading) {
+    return (
+      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+        <ActivityIndicator size="large" color="#1c94a7" />
+        <Text style={{marginTop: 10}}>Conectando con Edusupernova...</Text>
+      </View>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
-      {/* --- NAVBAR SUPERIOR --- */}
+    <View style={styles.container}>
+      {/* NAVBAR */}
       <View style={styles.navbar}>
         <View style={styles.navLeft}>
           <Text style={styles.navLogo}>Edusupernova</Text>
-          <Image
-            source={require("../../assets/iconoEdusupernovaSinFondo.png")}
-            style={styles.navIcon}
-          />
+          <Image source={require("../../assets/iconoEdusupernovaSinFondo.png")} style={styles.navIcon} />
         </View>
         <View style={styles.navLinks}>
           <Text style={styles.linkText}>Home</Text>
           <Text style={styles.linkText}>Exams</Text>
           <Text style={styles.linkText}>Tests</Text>
         </View>
-        <View style={styles.profileCircle}>
-          <Text style={{ fontSize: 20 }}>👤</Text>
-        </View>
+        <View style={styles.profileCircle}><Text style={{fontSize: 18}}>👤</Text></View>
       </View>
 
-      {selectedExam && (
-        <Pressable
-          style={styles.overlay}
-          onPress={() => setSelectedExam(null)}
-        />
-      )}
-      <ScrollView contentContainerStyle={{ paddingBottom: 50 }}>
-        {/* --- EXAM TYPE SELECTION --- */}
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={styles.paddingSection}>
           <Text style={styles.sectionTitle}>Exam Type:</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.examScroll}
-          >
-            {examTypes.map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.examCard,
-                  selectedExam === type && styles.examCardActive,
-                ]}
-                onPress={() =>
-                  setSelectedExam((prev) => (prev === type ? null : type))
-                }
-              >
-                <Text style={styles.examCardText}>{type}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          
+          {networkError ? (
+            <Text style={{color: 'red'}}>Error de conexión. Revisa el servidor.</Text>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.examScroll}>
+              {exams.length > 0 ? (
+                exams.map((exam) => (
+                  <TouchableOpacity
+                    key={exam.id} // Cambiado a .id
+                    onPress={() => handleSelectExam(exam)}
+                    style={[
+                      styles.examCard,
+                      selectedExam?.id === exam.id && styles.examCardActive, // Cambiado a .id
+                    ]}
+                  >
+                    <Text style={styles.examCardText}>{exam.examname}</Text>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={styles.helperText}>No hay exámenes en la DB.</Text>
+              )}
+            </ScrollView>
+          )}
         </View>
 
-        {/* --- DYNAMIC SECTION --- */}
         <View style={styles.paddingSection}>
           {selectedExam && (
             <>
               <Text style={styles.selectedTitle}>
-                Selected:{" "}
-                <Text style={{ fontWeight: "400" }}>{selectedExam}</Text>
+                Available for: <Text style={{fontWeight: '400'}}>{selectedExam.examname}</Text>
               </Text>
 
               <View style={styles.subjectsGrid}>
-                {subCategories[selectedExam]?.map((sub) => (
-                  <TouchableOpacity
-                    key={sub.id}
-                    style={styles.subCard}
-                    onPress={() => navigation?.navigate("Units")}
-                  >
-                    <View style={styles.iconContainer}>
-                      <Image source={sub.icon} style={styles.subIcon} />
-                    </View>
-                    <Text style={styles.subText}>{sub.name}</Text>
-                  </TouchableOpacity>
-                ))}
+                {courses.length > 0 ? (
+                  courses.map((course) => (
+                    <TouchableOpacity 
+                      key={course.id} // Cambiado a .id
+                      style={styles.subCard}
+                      onPress={() => navigation.navigate("Units", { courseId: course.id })} // Cambiado a .id
+                    >
+                      <View style={styles.iconContainer}>
+                        <Image 
+                          source={iconMap[course.icon] || iconMap['default']} 
+                          style={styles.subIcon} 
+                        />
+                      </View>
+                      <Text style={styles.subText}>{course.coursename}</Text>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <Text style={styles.helperText}>Selecciona un examen para ver materias.</Text>
+                )}
               </View>
             </>
           )}
         </View>
       </ScrollView>
-
-      {/* --- FOOTER (Mini) --- */}
-      {/* 6. FOOTER */}
-      <View style={styles.footer}>
-        <View>
-          <Text style={styles.footerText}>Contact | About Us</Text>
-          <Text style={styles.footerText}>Terms and Conditions</Text>
-        </View>
-        <View style={styles.socialIcons}>
-          <Image
-            source={require("../../assets/Instagram.png")}
-            style={styles.icon}
-          />
-          <Image
-            source={require("../../assets/LinkedInIcon.png")}
-            style={styles.icon}
-          />
-          <Image
-            source={require("../../assets/TikTokIcon.png")}
-            style={styles.icon}
-          />
-        </View>
-        <Text style={styles.footerText}>© 2026 Edusupernova</Text>
-      </View>
-    </SafeAreaView>
+    </View>
   );
 };
+
 export default UserInterface;

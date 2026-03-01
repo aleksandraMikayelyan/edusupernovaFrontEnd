@@ -1,165 +1,84 @@
-import React, { useState } from "react";
-import {
-  StyleSheet,
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Dimensions,
-  Image,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useState, useEffect, useMemo } from "react";
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import axios from "axios";
 import styles from "../styles/unitStyles.js";
 
-const { width } = Dimensions.get("window");
+const UnitScreen = ({ route }) => {
+  const { courseId } = route.params;
+  const [courseData, setCourseData] = useState(null);
+  const [activeUnit, setActiveUnit] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-const UnitScreen = ({ navigation }) => {
-  const [activeUnitId, setActiveUnitId] = useState(1);
-  const [showUnits, setShowUnits] = useState(false);
+  useEffect(() => {
+    axios.get(`http://localhost:8081/api/units/course/${courseId}`)
+      .then(res => {
+        setCourseData(res.data);
+        if (res.data.units?.length > 0) setActiveUnit(res.data.units[0]);
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
+  }, [courseId]);
 
-  const subjectData = {
-    title: "Mathematics",
-    units: [
-      {
-        id: 1,
-        name: "Unit 1: Quadratics",
-        content:
-          "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quadratics are polynomial equations of the second degree...",
-      },
-      {
-        id: 2,
-        name: "Unit 2: Linear Geometry",
-        content: "Contenido sobre geometría lineal...",
-      },
-      {
-        id: 3,
-        name: "Unit 3: Functions",
-        content: "Estudio de las funciones matemáticas...",
-      },
-      {
-        id: 4,
-        name: "Unit 4: Derivatives",
-        content: "Cálculo diferencial y derivadas...",
-      },
-      { id: 5, name: "Unit 5: Integrals", content: "Cálculo integral..." },
-    ],
-  };
+  const articleContent = useMemo(() => {
+    if (!activeUnit) return null;
+    return (
+      <View style={styles.articleCard}>
+        <Text style={styles.articleTitle}>{activeUnit.title}</Text>
+        <View style={styles.blueBar} />
+        <Text selectable={true} style={styles.textContent}>
+          {activeUnit.summary_path}
+        </Text>
+        <TouchableOpacity style={styles.knowledgeButton}>
+          <Text style={styles.knowledgeButtonText}>Check your knowledge</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }, [activeUnit?.id, activeUnit?.summary_path]);
 
-  const currentUnit = subjectData.units.find((u) => u.id === activeUnitId);
+  if (loading) return <View style={styles.loadingCenter}><ActivityIndicator size="large" color="#1c94a7" /></View>;
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* HEADER */}
+    <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.logoSmall}>Edusupernova</Text>
-
-        <View style={styles.navLinks}>
-          <Text style={styles.navText}>Home</Text>
-          <Text style={styles.navText}>Exams</Text>
-          <Text style={styles.navText}>Score</Text>
-        </View>
-
-        <View style={styles.profilePlaceholder} />
+        <Text style={styles.logoText}>EduSuperNova</Text>
       </View>
 
-      {/* MAIN LAYOUT */}
       <View style={styles.mainLayout}>
-        {/* SIDEBAR */}
+        {/* Sidebar con su propio scroll independiente */}
         <View style={styles.sidebar}>
-          {/* Botón de descarga justo debajo del título */}
-          <TouchableOpacity style={[styles.downloadBtn, { marginBottom: 12 }]}>
-            <Text style={styles.downloadBtnText}>Download Formula Sheet</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => setShowUnits((s) => !s)}>
-            <Text style={styles.subjectTitle}>{subjectData.title} ⌵</Text>
-          </TouchableOpacity>
-
-          {showUnits && (
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              style={{ marginTop: 10 }}
-            >
-              {subjectData.units.map((unit) => (
-                <TouchableOpacity
-                  key={unit.id}
-                  style={[
-                    styles.unitButton,
-                    activeUnitId === unit.id
-                      ? styles.unitButtonActive
-                      : styles.unitButtonInactive,
-                  ]}
-                  onPress={() => setActiveUnitId(unit.id)}
-                >
-                  <Text
-                    style={[
-                      styles.unitButtonText,
-                      activeUnitId === unit.id
-                        ? styles.textWhite
-                        : styles.textGrey,
-                    ]}
-                  >
-                    {unit.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
+          <Text style={styles.courseTitle}>{courseData?.courseName}</Text>
+          <ScrollView 
+            showsVerticalScrollIndicator={true}
+            nestedScrollEnabled={true}
+          >
+            {courseData?.units?.map((u) => (
+              <TouchableOpacity
+                key={u.id}
+                onPress={() => activeUnit?.id !== u.id && setActiveUnit(u)}
+                style={[styles.unitTab, activeUnit?.id === u.id && styles.unitTabActive]}
+              >
+                <Text style={activeUnit?.id === u.id ? styles.textActive : styles.textInactive}>
+                  {u.title}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
-        {/* CONTENT AREA */}
-        <ScrollView
-          style={styles.contentArea}
-          contentContainerStyle={styles.scrollContent}
-        >
-          <Text style={styles.unitTitle}>
-            {currentUnit.name} Summary and Formula sheet
-          </Text>
-
-          <Text style={styles.textContent}>
-            {currentUnit.content}
-            {"\n\n"}
-            {currentUnit.content}
-          </Text>
-
-          <View style={styles.actionContainer}>
-            <TouchableOpacity
-              style={styles.checkKnowledgeBtn}
-              onPress={() => navigation.navigate("Test")}
-            >
-              <Text style={styles.checkKnowledgeText}>
-                Check your knowledge
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+        {/* CONTENEDOR PRINCIPAL: flex: 1 es vital para que el scroll funcione */}
+        <View style={{ flex: 1, height: '100%', width: '100%' }}>
+          <ScrollView 
+            style={styles.contentArea}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={true}
+            scrollEnabled={true}
+            nestedScrollEnabled={true}
+          >
+            {articleContent}
+          </ScrollView>
+        </View>
       </View>
-
-      {/* FOOTER */}
-      <View style={styles.footer}>
-        <View>
-          <Text style={styles.footerText}>Contact | About Us</Text>
-          <Text style={styles.footerText}>Terms and Conditions</Text>
-        </View>
-
-        <View style={styles.socialIcons}>
-          <Image
-            source={require("../../assets/Instagram.png")}
-            style={styles.icon}
-          />
-          <Image
-            source={require("../../assets/LinkedInIcon.png")}
-            style={styles.icon}
-          />
-          <Image
-            source={require("../../assets/TikTokIcon.png")}
-            style={styles.icon}
-          />
-        </View>
-
-        <Text style={styles.footerText}>© 2026 Edusupernova</Text>
-      </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
