@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StatusBar } from "react-native";
+import { View, StatusBar, Platform } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -38,7 +38,7 @@ export default function App() {
       {/* 1. Forzamos que el View principal ocupe TODA la pantalla. 
          2. Quitamos cualquier posible interferencia de gestos con pointerEvents="auto" (por si acaso).
       */}
-      <View style={{ flex: 1, backgroundColor: "#fff" }} pointerEvents="auto">
+      <View style={{ flex: 1, backgroundColor: "#fff", height: Platform.OS === 'web' ? '100vh' : '100%', overflow: 'hidden' }} pointerEvents="auto">
         <StatusBar barStyle="dark-content" />
 
         <NavigationContainer>

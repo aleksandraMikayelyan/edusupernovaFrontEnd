@@ -1,127 +1,192 @@
 import React, { useState, useEffect } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import styles from "../styles/testStyles.js";
 
 const TestScreen = ({ navigation }) => {
-  // Estados para la lógica del test
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Simulación de carga desde el Backend
+  // Simulation of loading questions from backend
   useEffect(() => {
     const fetchQuestions = async () => {
-      // Aquí harías tu: fetch('tu-api.com/tests/random')
+      // Mock data for the demonstration
       const mockData = [
         {
           id: 1,
-          question:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem. Aliquam erat volutpat. Donec neque orci, accumsan a nibh.",
-          options: ["Option A", "Option B", "Option C", "Option D"],
+          question: "Which of the following best describes the economic concept of SCARCITY?",
+          options: [
+            "A condition where resources are limited but human wants are unlimited.",
+            "A situation where there is a surplus of goods and services.",
+            "The ability of the government to control all production factors.",
+            "A market state where demand and supply are perfectly equal."
+          ],
           correct: 0,
         },
-        // ... más preguntas
+        {
+          id: 2,
+          question: "What is the primary difference between Capital-intensive and Labor-intensive production?",
+          options: [
+            "The amount of government tax applied to each methodology.",
+            "The ratio of machinery vs. manual labor used in the process.",
+            "The geographical location where the production takes place.",
+            "The final price at which the goods are sold to consumers."
+          ],
+          correct: 1,
+        },
+        {
+          id: 3,
+          question: "In the context of Opportunity Cost, what does choosing one option over another represent?",
+          options: [
+            "A financial gain from the chosen resource.",
+            "The value of the next best alternative given up.",
+            "The total cost of production including labor.",
+            "A decrease in market competition."
+          ],
+          correct: 1,
+        }
       ];
       setQuestions(mockData);
+      setLoading(false);
     };
     fetchQuestions();
   }, []);
 
-  if (questions.length === 0)
+  if (loading) {
     return (
-      <View style={styles.container}>
-        <Text>Loading Test...</Text>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#1c94a7" />
       </View>
     );
+  }
 
   const currentQuestion = questions[currentIndex];
+  const progress = (currentIndex + 1) / questions.length;
 
   const handleNext = () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
-      setSelectedOption(null); // Reset para la siguiente pregunta
+      setSelectedOption(null);
     } else {
-      alert("¡Test finalizado! Enviando a la IA para feedback...");
-      navigation.navigate("FeedbackPage"); // Navega al feedback al terminar
+      navigation.navigate("FeedbackPage");
     }
   };
 
+  const SidebarItem = ({ icon, label, isActive = false, onPress }) => (
+    <TouchableOpacity
+      style={[styles.menuItem, isActive && styles.menuItemActive]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <Text style={styles.menuIcon}>{icon}</Text>
+      <Text style={[styles.menuText, isActive && styles.menuTextActive]}>{label}</Text>
+    </TouchableOpacity>
+  );
+
   return (
-    <SafeAreaView style={styles.container}>
-      {/* HEADER AZUL (Consistente con tu diseño) */}
-      <View style={styles.header}>
-        <Text style={styles.logo}>Edusupernova</Text>
-        <View style={styles.navLinks}>
-          <Text style={styles.navItem}>Home</Text>
-          <Text style={styles.navItem}>Exams</Text>
-          <Text style={styles.navItem}>Score</Text>
+    <View style={styles.container}>
+      <View style={styles.mainLayout}>
+
+        {/* ── Sidebar Menu ── */}
+        <View style={styles.sidebar}>
+          <View style={styles.logoContainer}>
+            <Text style={styles.logoText}>Edusupernova</Text>
+          </View>
+
+          <Text style={styles.menuLabel}>MENU</Text>
+          <SidebarItem
+            icon="🏠"
+            label="Home"
+            onPress={() => navigation.navigate("Home")}
+          />
+          <SidebarItem
+            icon="📖"
+            label="Units"
+            onPress={() => navigation.goBack()}
+          />
+          <SidebarItem
+            icon="👤"
+            label="Profile"
+            onPress={() => { }}
+          />
+          <SidebarItem
+            icon="📈"
+            label="Scores"
+            onPress={() => { }}
+          />
+
+          <View style={styles.logoutItem}>
+            <SidebarItem
+              icon="🚪"
+              label="Log out"
+              onPress={() => navigation.navigate("Login")}
+            />
+          </View>
         </View>
-        <View style={styles.profileIcon} />
+
+        {/* ── Content Area ── */}
+        <View style={styles.contentArea}>
+
+          {/* Progress Header */}
+          <View style={styles.progressHeader}>
+            <View style={styles.progressInfo}>
+              <Text style={styles.questionIndex}>QUESTION {currentIndex + 1} OF {questions.length}</Text>
+              <Text style={styles.timerText}>⏳ 12:45 remaining</Text>
+            </View>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+            </View>
+          </View>
+
+          {/* Question Card */}
+          <View style={styles.questionCard}>
+            <Text style={styles.questionLabel}>EVALUATION</Text>
+            <Text style={styles.questionText}>{currentQuestion.question}</Text>
+
+            <View style={styles.optionsGrid}>
+              {currentQuestion.options.map((option, index) => {
+                const letter = String.fromCharCode(65 + index); // A, B, C, D
+                const isSelected = selectedOption === index;
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={[styles.optionTile, isSelected && styles.optionTileSelected]}
+                    onPress={() => setSelectedOption(index)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={[styles.optionLetter, isSelected && styles.optionLetterSelected]}>
+                      <Text style={[styles.optionLetterText, isSelected && styles.optionLetterTextSelected]}>
+                        {letter}
+                      </Text>
+                    </View>
+                    <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Navigation */}
+            <View style={styles.navigationRow}>
+              <TouchableOpacity
+                style={[styles.nextButton, selectedOption === null && styles.nextButtonDisabled]}
+                onPress={handleNext}
+                disabled={selectedOption === null}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.nextButtonText}>
+                  {currentIndex === questions.length - 1 ? "Finish Test" : "Next Question"}
+                </Text>
+                <Text style={styles.nextButtonText}>›</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+        </View>
       </View>
-
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.questionTitle}>Question {currentIndex + 1}</Text>
-
-        <Text style={styles.questionText}>{currentQuestion.question}</Text>
-
-        {/* RENDER DE OPCIONES ALEATORIAS */}
-        <View style={styles.optionsContainer}>
-          {currentQuestion.options.map((option, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.optionButton,
-                selectedOption === index && styles.optionSelected,
-              ]}
-              onPress={() => setSelectedOption(index)}
-            >
-              <Text style={styles.optionText}>{option}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* PIE DE PREGUNTA */}
-        <View style={styles.footerRow}>
-          <Text style={styles.progressText}>
-            {currentIndex + 1}/{questions.length}
-          </Text>
-
-          <TouchableOpacity
-            style={styles.nextButton}
-            onPress={handleNext}
-            //onPress={() => navigation.navigate("FeedbackPage")}
-            //disabled={selectedOption === null}
-          >
-            <Text style={styles.nextButtonText}>Next ›</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-      {/* FOOTER */}
-      <View style={styles.footer}>
-        <View>
-          <Text style={styles.footerText}>Contact | About Us</Text>
-          <Text style={styles.footerText}>Terms and Conditions</Text>
-        </View>
-
-        <View style={styles.socialIcons}>
-          <Image
-            source={require("../../assets/Instagram.png")}
-            style={styles.icon}
-          />
-          <Image
-            source={require("../../assets/LinkedInIcon.png")}
-            style={styles.icon}
-          />
-          <Image
-            source={require("../../assets/TikTokIcon.png")}
-            style={styles.icon}
-          />
-        </View>
-
-        <Text style={styles.footerText}>© 2026 Edusupernova</Text>
-      </View>
-    </SafeAreaView>
+    </View>
   );
 };
 

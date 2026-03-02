@@ -1,13 +1,26 @@
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   padding: 0;
-  /* Evitamos que el navegador pelee con React */
-  overflow: hidden; 
+  overflow: hidden;
 }
 
-/* Solo permitimos scroll dentro de los componentes de React */
 #root {
   display: flex;
   flex-direction: column;
+}
+
+/* React Navigation wraps each screen in div containers.
+   Without explicit height, they grow freely and break ScrollView. */
+[data-testid="navigator"],
+[data-reactroot]>div,
+div[style*="flex: 1"] {
+  box-sizing: border-box;
+}
+
+/* Force RN Web ScrollViews to actually scroll */
+div[style*="overflow"] {
+  box-sizing: border-box;
 }
