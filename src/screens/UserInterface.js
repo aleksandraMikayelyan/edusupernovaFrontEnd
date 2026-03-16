@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
-import iconMap from "../components/icon"; 
+import iconMap from "../components/icon";
 import styles from "../styles/userInterfaceStyles.js";
 
 const UserInterface = ({ navigation }) => {
@@ -18,7 +19,7 @@ const UserInterface = ({ navigation }) => {
   const fetchExams = async () => {
     try {
       setNetworkError(false);
-      const response = await axios.get("http://localhost:8081/api/exams/dashboard");
+      const response = await axios.get("http://localhost:8080/api/exams/dashboard");
       if (Array.isArray(response.data)) {
         setExams(response.data);
       }
@@ -32,12 +33,12 @@ const UserInterface = ({ navigation }) => {
 
   const handleSelectExam = async (exam) => {
     if (!exam || !exam.id) return; // Cambiado a .id
-    
+
     setSelectedExam(exam);
     setCourses([]);
 
     try {
-      const response = await axios.get(`http://localhost:8081/api/exams/${exam.id}`); // Cambiado a .id
+      const response = await axios.get(`http://localhost:8080/api/exams/${exam.id}`); // Cambiado a .id
       if (Array.isArray(response.data)) {
         setCourses(response.data);
       }
@@ -48,9 +49,9 @@ const UserInterface = ({ navigation }) => {
 
   if (loading) {
     return (
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#1c94a7" />
-        <Text style={{marginTop: 10}}>Conectando con Edusupernova...</Text>
+        <Text style={{ marginTop: 10 }}>Conectando con Edusupernova...</Text>
       </View>
     );
   }
@@ -68,15 +69,15 @@ const UserInterface = ({ navigation }) => {
           <Text style={styles.linkText}>Exams</Text>
           <Text style={styles.linkText}>Tests</Text>
         </View>
-        <View style={styles.profileCircle}><Text style={{fontSize: 18}}>👤</Text></View>
+        <View style={styles.profileCircle}><Ionicons name="person-outline" size={20} color="#1c94a7" /></View>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={styles.paddingSection}>
           <Text style={styles.sectionTitle}>Exam Type:</Text>
-          
+
           {networkError ? (
-            <Text style={{color: 'red'}}>Error de conexión. Revisa el servidor.</Text>
+            <Text style={{ color: 'red' }}>Error de conexión. Revisa el servidor.</Text>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.examScroll}>
               {exams.length > 0 ? (
@@ -103,21 +104,21 @@ const UserInterface = ({ navigation }) => {
           {selectedExam && (
             <>
               <Text style={styles.selectedTitle}>
-                Available for: <Text style={{fontWeight: '400'}}>{selectedExam.examname}</Text>
+                Available for: <Text style={{ fontWeight: '400' }}>{selectedExam.examname}</Text>
               </Text>
 
               <View style={styles.subjectsGrid}>
                 {courses.length > 0 ? (
                   courses.map((course) => (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       key={course.id} // Cambiado a .id
                       style={styles.subCard}
-                      onPress={() => navigation.navigate("Units", { courseId: course.id })} // Cambiado a .id
+                      onPress={() => navigation.navigate("Units", { courseId: course.id, examType: selectedExam?.examname })} // Cambiado a .id
                     >
                       <View style={styles.iconContainer}>
-                        <Image 
-                          source={iconMap[course.icon] || iconMap['default']} 
-                          style={styles.subIcon} 
+                        <Image
+                          source={iconMap[course.icon] || iconMap['default']}
+                          style={styles.subIcon}
                         />
                       </View>
                       <Text style={styles.subText}>{course.coursename}</Text>

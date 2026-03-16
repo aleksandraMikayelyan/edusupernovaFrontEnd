@@ -1,102 +1,314 @@
-import React from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
-// Asegúrate de que este archivo no tenga "pointerEvents" en sus estilos
+import React, { useEffect, useState } from "react";
+import {
+  SafeAreaView,
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  Animated,
+} from "react-native";
+import axios from "axios";
 import styles from "../styles/feedbackStyles.js";
 
-const FeedbackScreen = ({ navigation }) => {
-  const aiFeedbackData = {
-    testMark: "0/10",
-    questionsFeedback: [
-      {
-        id: 1,
-        text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.",
-        aiCorrection:
-          "Gemini AI: Aquí fallaste porque olvidaste aplicar la ley de los signos...",
-      },
-      {
-        id: 2,
-        text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.",
-        aiCorrection:
-          "Gemini AI: Tu razonamiento fue bueno, pero el paso 3 requería una derivada...",
-      },
-    ],
-  };
+// Score badge color helper
+const getScoreColor = (mark) => {
+  if (!mark) return { bg: "#e8f7f9", text: "#1c94a7", border: "#1c94a7" };
+  const num = parseFloat(mark);
+  if (num >= 8) return { bg: "#edfaf4", text: "#1a7a4a", border: "#2ecc71" };
+  if (num >= 5) return { bg: "#fff8e6", text: "#a06a00", border: "#f5a623" };
+  return { bg: "#fff0f0", text: "#b02020", border: "#e74c3c" };
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// QUESTION CARD COMPONENT
+// Handles both multiple-choice (questions 1-15) and open-ended (16-20)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const QuestionCard = ({ item, index }) => {
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const questionNumber = item.id || index + 1;
+  const isOpenEnded = questionNumber > 15;
+
+  React.useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 400,
+      delay: index * 80,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  // Determine if the answer is correct (for multiple choice)
+  const isCorrect = !isOpenEnded && item.userAnswer === item.correctAnswer;
 
   return (
-    // Usamos pointerEvents="auto" explícitamente solo si quieres forzar la interactividad,
-    // pero por defecto no es necesario ponerlo.
-    <SafeAreaView style={styles.container}>
+    <Animated.View
+      style={[
+        styles.questionCard,
+        !isOpenEnded && isCorrect && styles.questionCardCorrect,
+        !isOpenEnded && !isCorrect && styles.questionCardIncorrect,
+        { opacity: fadeAnim },
+      ]}
+    >
+      {/* Question Header */}
+      <View style={styles.questionHeader}>
+        <View style={styles.questionBadge}>
+          <Text style={styles.questionBadgeText}>Q{questionNumber}</Text>
+        </View>
+        <Text style={styles.questionLabel}>
+          Question {questionNumber} {isOpenEnded ? "(Open-Ended)" : "(Multiple Choice)"}
+        </Text>
+      </View>
+
+      {/* Question Text */}
+      <Text style={styles.questionContent}>{item.text}</Text>
+
+      {/* MULTIPLE CHOICE: Show correct answer if wrong */}
+      {!isOpenEnded && (
+        <View style={styles.answerSection}>
+          {!isCorrect && (
+            <View style={[styles.answerRow, styles.answerRowYourAnswer]}>
+              <Text style={[styles.answerLabel, styles.answerLabelYours]}>
+                Your Answer:
+              </Text>
+              <Text style={[styles.answerText, styles.answerTextYours]}>
+                {item.userAnswer || "No answer provided"}
+              </Text>
+            </View>
+          )}
+
+          <View style={[styles.answerRow, styles.answerRowCorrect]}>
+            <Text style={[styles.answerLabel, styles.answerLabelCorrect]}>
+              Correct Answer:
+            </Text>
+            <Text style={[styles.answerText, styles.answerTextCorrect]}>
+              {item.correctAnswer || "Not available"}
+            </Text>
+          </View>
+
+          {isCorrect && (
+            <View style={styles.correctIndicator}>
+              <View style={styles.correctIcon}>
+                <Text style={styles.correctIconText}>✓</Text>
+              </View>
+              <Text style={styles.correctText}>You got this one right!</Text>
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* OPEN-ENDED: Show user's answer and AI feedback */}
+      {isOpenEnded && (
+        <>
+          {/* User's Answer */}
+          {item.userAnswer && (
+            <View style={styles.userAnswerBox}>
+              <Text style={styles.userAnswerLabel}>Your Answer</Text>
+              <Text style={styles.userAnswerText}>{item.userAnswer}</Text>
+            </View>
+          )}
+
+          {/* AI Feedback */}
+          <View style={styles.aiBox}>
+            <View style={styles.aiBoxHeader}>
+              <View style={styles.aiDot} />
+              <Text style={styles.aiBoxTitle}>AI Feedback</Text>
+            </View>
+            <Text style={styles.aiText}>
+              {item.aiCorrection || "No feedback provided."}
+            </Text>
+          </View>
+        </>
+      )}
+    </Animated.View>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN FEEDBACK SCREEN
+// ═══════════════════════════════════════════════════════════════════════════
+
+const FeedbackScreen = ({ route, navigation }) => {
+  const { userAnswers, testId, examType, sectionName } = route.params || {};
+
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const fetchFeedback = async () => {
+      try {
+        setLoading(true);
+        setError(false);
+        const response = await axios.post(
+          "http://localhost:8080/api/feedback/process",
+          userAnswers,
+          {
+            params: {
+              testId,
+              examType: examType || "",
+              sectionName: sectionName || "",
+            }
+          }
+        );
+        setData(response.data);
+      } catch (err) {
+        console.error("Error fetching feedback:", err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (userAnswers && userAnswers.length > 0) {
+      fetchFeedback();
+    } else {
+      setLoading(false);
+    }
+  }, [userAnswers]);
+
+  // ─── LOADING STATE ─────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <View style={styles.loadingCard}>
+          <ActivityIndicator size="large" color="#1c94a7" />
+          <Text style={styles.loadingTitle}>Analyzing Your Exam</Text>
+          <Text style={styles.loadingSubtitle}>
+            Our AI is reviewing your answers...
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  // ─── ERROR STATE ───────────────────────────────────────────────────────
+  if (error || !data) {
+    return (
+      <View style={styles.errorContainer}>
+        <View style={styles.errorCard}>
+          <View style={styles.errorIcon}>
+            <Text style={styles.errorIconText}>!</Text>
+          </View>
+          <Text style={styles.errorTitle}>Connection Error</Text>
+          <Text style={styles.errorSubtitle}>
+            The AI server didn't respond. Please check your connection and try again.
+          </Text>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => navigation.navigate("Home")}
+          >
+            <Text style={styles.actionButtonText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // ─── DATA PREPARATION ──────────────────────────────────────────────────
+  const scoreColors = getScoreColor(data.testMark);
+  const totalQuestions = data.questionsFeedback?.length || 0;
+  const multipleChoiceCount = Math.min(15, totalQuestions);
+  const openEndedCount = Math.max(0, totalQuestions - 15);
+
+  // ─── MAIN VIEW ─────────────────────────────────────────────────────────
+  return (
+    <View style={styles.container}>
       {/* HEADER */}
       <View style={styles.header}>
         <Text style={styles.logo}>Edusupernova</Text>
         <View style={styles.navLinks}>
-          <Text style={styles.navItem}>Home</Text>
-          <Text style={styles.navItem}>Subjects</Text>
-          <Text style={styles.navItem}>Tests</Text>
+          <TouchableOpacity onPress={() => navigation.navigate("Home")}>
+            <Text style={styles.navItem}>Home</Text>
+          </TouchableOpacity>
         </View>
         <View style={styles.profileCircle} />
       </View>
 
-      {/* ScrollView con contentContainerStyle para evitar errores de layout */}
+      {/* SCROLLABLE CONTENT */}
       <ScrollView
-        style={{ flex: 1 }}
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* TÍTULO Y NOTA */}
-        <View style={styles.resultsHeader}>
-          <Text style={styles.mainTitle}>Feedback Generated by AI:</Text>
-          <Text style={styles.markLabel}>
-            Test mark:{" "}
-            <Text style={styles.markValue}>{aiFeedbackData.testMark}</Text>
+        {/* RESULTS HERO CARD */}
+        <View style={styles.heroCard}>
+          <Text style={styles.heroTitle}>Your Results</Text>
+          <Text style={styles.heroSubtitle}>
+            {multipleChoiceCount} multiple choice · {openEndedCount} open-ended questions
           </Text>
+
+          <View
+            style={[
+              styles.scorePill,
+              {
+                backgroundColor: scoreColors.bg,
+                borderColor: scoreColors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.scoreValue, { color: scoreColors.text }]}>
+              {data.testMark || "N/A"}
+            </Text>
+            <Text style={[styles.scoreLabel, { color: scoreColors.text }]}>
+              Final Score
+            </Text>
+          </View>
         </View>
 
-        {/* LISTADO DE FEEDBACK */}
-        {aiFeedbackData.questionsFeedback.map((item) => (
-          <View key={item.id.toString()} style={styles.feedbackBlock}>
-            <Text style={styles.questionLabel}>QUESTION {item.id}:</Text>
-            <Text style={styles.questionContent}>{item.text}</Text>
-
-            <View style={styles.aiBox}>
-              <Text style={styles.aiText}>{item.aiCorrection}</Text>
-            </View>
+        {/* MULTIPLE CHOICE SECTION */}
+        {multipleChoiceCount > 0 && (
+          <View style={styles.feedbackSection}>
+            <Text style={styles.sectionTitle}>
+              Multiple Choice Questions (1-15)
+            </Text>
+            {data.questionsFeedback?.slice(0, 15).map((item, index) => (
+              <QuestionCard key={index} item={item} index={index} />
+            ))}
           </View>
-        ))}
+        )}
 
-        {/* BOTÓN HOME */}
+        {/* OPEN-ENDED SECTION */}
+        {openEndedCount > 0 && (
+          <View style={styles.feedbackSection}>
+            <Text style={styles.sectionTitle}>
+              Open-Ended Questions (16-20) — AI Evaluated
+            </Text>
+            {data.questionsFeedback?.slice(15).map((item, index) => (
+              <QuestionCard key={index + 15} item={item} index={index + 15} />
+            ))}
+          </View>
+        )}
+
+        {/* EMPTY STATE */}
+        {totalQuestions === 0 && (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No feedback available.</Text>
+          </View>
+        )}
+
+        {/* BACK TO HOME BUTTON */}
         <TouchableOpacity
-          style={styles.homeBtn}
-          activeOpacity={0.8}
+          style={styles.actionButton}
           onPress={() => navigation?.navigate("Home")}
         >
-          <Text style={styles.homeBtnText}>Back to Home</Text>
+          <Text style={styles.actionButtonText}>Back to Home</Text>
         </TouchableOpacity>
       </ScrollView>
-      {/* 6. FOOTER */}
+
+      {/* FOOTER */}
       <View style={styles.footer}>
-        <View>
-          <Text style={styles.footerText}>Contact | About Us</Text>
-          <Text style={styles.footerText}>Terms and Conditions</Text>
-        </View>
+        <Text style={styles.footerText}>© 2026 Edusupernova</Text>
         <View style={styles.socialIcons}>
           <Image
             source={require("../../assets/Instagram.png")}
             style={styles.icon}
           />
-          <Image
-            source={require("../../assets/LinkedInIcon.png")}
-            style={styles.icon}
-          />
-          <Image
-            source={require("../../assets/TikTokIcon.png")}
-            style={styles.icon}
-          />
         </View>
-        <Text style={styles.footerText}>© 2026 Edusupernova</Text>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 

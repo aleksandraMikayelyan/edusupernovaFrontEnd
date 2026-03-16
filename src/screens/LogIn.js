@@ -32,7 +32,7 @@ const LoginScreen = ({ navigation }) => {
     try {
       // IMPORTANTE: Cambia 'localhost' por '10.0.2.2' si usas emulador Android
       const response = await axios.post(
-        "http://localhost:8081/api/users/login",
+        "http://localhost:8080/api/users/login",
         {
           email: email,
           password: password,

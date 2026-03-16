@@ -1,47 +1,75 @@
 import { StyleSheet, Platform } from "react-native";
 
+// ═══════════════════════════════════════════════════════════════════════════
+// UNIFIED DESIGN SYSTEM - Edusupernova
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Primary Brand Colors
+const OCEAN_DEEP = "#0a5f6e";      // Primary brand color
+const OCEAN_BRIGHT = "#1c94a7";    // Interactive elements
+const OCEAN_LIGHT = "#e8f7f9";     // Backgrounds, highlights
+
+// Neutrals
+const WHITE = "#ffffff";
+const TEXT_PRIMARY = "#0F172A";
+const TEXT_SECONDARY = "#64748B";
+const TEXT_MUTED = "#94A3B8";
+const BG_PAGE = "#F0F4F8";
+const BG_CARD = "#FFFFFF";
+const BG_SIDEBAR = "#FFFFFF";
+const BORDER_LIGHT = "#E2EBF0";
+const BORDER_MEDIUM = "#CBD5E1";
+
+// Semantic
+const ERROR_TEXT = "#EF4444";
+
+// ═══════════════════════════════════════════════════════════════════════════
+
 export default StyleSheet.create({
-  // ─── Root ──────────────────────────────────────────────────────────────
+  // ─── ROOT ────────────────────────────────────────────────────────────────
   container: {
     flex: 1,
-    backgroundColor: "#F0F4F8",
-    height: Platform.OS === 'web' ? '100vh' : '100%',
+    backgroundColor: BG_PAGE,
+    ...Platform.select({
+      web: { height: '100vh' },
+    }),
   },
 
-  // ─── Layout ─────────────────────────────────────────────────────────────
+  // ─── LAYOUT ──────────────────────────────────────────────────────────────
   mainLayout: {
     flexDirection: "row",
     height: "100%",
   },
 
-  // ─── Sidebar (Menu) ──────────────────────────────────────────────────────
+  // ─── SIDEBAR (MENU) ──────────────────────────────────────────────────────
   sidebar: {
     width: 280,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: BG_SIDEBAR,
     paddingTop: 32,
     paddingHorizontal: 20,
     borderRightWidth: 1,
-    borderColor: "#E2EBF0",
+    borderColor: BORDER_LIGHT,
     ...Platform.select({
       web: {
-        boxShadow: '2px 0 8px rgba(0,0,0,0.04)',
+        boxShadow: '2px 0 12px rgba(0, 0, 0, 0.04)',
       },
     }),
   },
   logoContainer: {
-    marginBottom: 48,
+    marginBottom: 56,
     paddingLeft: 10,
   },
   logoText: {
-    color: "#0d7a8a",
+    color: OCEAN_DEEP,
     fontSize: 32,
     fontFamily: "Cookie_400Regular",
+    letterSpacing: 0.5,
   },
   menuLabel: {
     fontSize: 10,
-    letterSpacing: 2,
+    letterSpacing: 2.5,
     fontFamily: "Newsreader_700Bold",
-    color: "#94A3B8",
+    color: TEXT_MUTED,
     marginBottom: 16,
     paddingLeft: 10,
   },
@@ -53,20 +81,28 @@ export default StyleSheet.create({
     borderRadius: 12,
     marginBottom: 6,
     gap: 12,
+    ...Platform.select({
+      web: {
+        cursor: 'pointer',
+        transition: 'background-color 0.2s ease',
+      },
+    }),
   },
   menuItemActive: {
-    backgroundColor: "#e8f7f9",
+    backgroundColor: OCEAN_LIGHT,
   },
   menuIcon: {
-    fontSize: 18,
+    width: 20,
+    height: 20,
   },
   menuText: {
     fontSize: 15,
     fontFamily: "Newsreader_400Regular",
-    color: "#64748B",
+    color: TEXT_SECONDARY,
+    letterSpacing: 0.2,
   },
   menuTextActive: {
-    color: "#0d7a8a",
+    color: OCEAN_DEEP,
     fontFamily: "Newsreader_700Bold",
   },
   logoutItem: {
@@ -74,14 +110,19 @@ export default StyleSheet.create({
     marginBottom: 32,
   },
 
-  // ─── Content Area ───────────────────────────────────────────────────────
+  // ─── CONTENT AREA ────────────────────────────────────────────────────────
   contentArea: {
     flex: 1,
     padding: 48,
     alignItems: "center",
+    ...Platform.select({
+      web: {
+        overflowY: 'auto',
+      },
+    }),
   },
 
-  // ─── Progress Header ─────────────────────────────────────────────────────
+  // ─── PROGRESS HEADER ─────────────────────────────────────────────────────
   progressHeader: {
     width: '100%',
     maxWidth: 900,
@@ -94,58 +135,67 @@ export default StyleSheet.create({
     marginBottom: 12,
   },
   questionIndex: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: "Newsreader_700Bold",
-    color: "#64748B",
-    letterSpacing: 1,
+    color: TEXT_SECONDARY,
+    letterSpacing: 1.5,
   },
   timerText: {
     fontSize: 14,
     fontFamily: "Newsreader_400Regular",
-    color: "#94A3B8",
+    color: TEXT_MUTED,
+    letterSpacing: 0.3,
   },
   progressTrack: {
     height: 6,
-    backgroundColor: "#E2E8F0",
+    backgroundColor: BORDER_LIGHT,
     borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: "#1c94a7",
+    backgroundColor: OCEAN_BRIGHT,
     borderRadius: 3,
+    ...Platform.select({
+      web: {
+        transition: 'width 0.3s ease',
+      },
+    }),
   },
 
-  // ─── Question Card ───────────────────────────────────────────────────────
+  // ─── QUESTION CARD ───────────────────────────────────────────────────────
   questionCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: BG_CARD,
     borderRadius: 24,
     padding: 56,
     width: '100%',
     maxWidth: 900,
+    borderWidth: 1,
+    borderColor: BORDER_LIGHT,
     ...Platform.select({
       web: {
-        boxShadow: '0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04)',
       },
     }),
   },
   questionLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: "Newsreader_700Bold",
-    color: "#1c94a7",
+    color: OCEAN_BRIGHT,
     letterSpacing: 2.5,
     textTransform: "uppercase",
     marginBottom: 20,
   },
   questionText: {
     fontSize: 22,
-    lineHeight: 34,
+    lineHeight: 36,
     fontFamily: "Newsreader_400Regular",
-    color: "#1E293B",
+    color: TEXT_PRIMARY,
     marginBottom: 48,
+    letterSpacing: -0.2,
   },
 
-  // ─── Options ─────────────────────────────────────────────────────────────
+  // ─── OPTIONS (MULTIPLE CHOICE) ───────────────────────────────────────────
   optionsGrid: {
     gap: 16,
   },
@@ -157,49 +207,101 @@ export default StyleSheet.create({
     backgroundColor: "#F8FAFC",
     borderWidth: 2,
     borderColor: "transparent",
+    ...Platform.select({
+      web: {
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+      },
+    }),
   },
   optionTileSelected: {
-    backgroundColor: "#F0FDFA",
-    borderColor: "#1c94a7",
+    backgroundColor: OCEAN_LIGHT,
+    borderColor: OCEAN_BRIGHT,
   },
   optionLetter: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: "#E2E8F0",
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: BORDER_LIGHT,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: 18,
+    flexShrink: 0,
   },
   optionLetterSelected: {
-    backgroundColor: "#1c94a7",
+    backgroundColor: OCEAN_BRIGHT,
   },
   optionLetterText: {
     fontSize: 14,
     fontFamily: "Newsreader_700Bold",
-    color: "#64748B",
+    color: TEXT_SECONDARY,
   },
   optionLetterTextSelected: {
-    color: "#FFFFFF",
+    color: WHITE,
   },
   optionText: {
     fontSize: 18,
     fontFamily: "Newsreader_400Regular",
-    color: "#334155",
+    color: TEXT_PRIMARY,
+    flex: 1,
+    lineHeight: 27,
   },
   optionTextSelected: {
-    color: "#0d7a8a",
-    fontFamily: "Newsreader_700Bold",
+    color: OCEAN_DEEP,
+    fontFamily: "Newsreader_600SemiBold",
   },
 
-  // ─── Navigation ──────────────────────────────────────────────────────────
+  // ─── OPEN-ENDED TEXT INPUT ───────────────────────────────────────────────
+  openEndedContainer: {
+    width: "100%",
+    minHeight: 400,
+  },
+  openEndedInput: {
+    backgroundColor: "#F8FAFC",
+    borderWidth: 2,
+    borderColor: BORDER_MEDIUM,
+    borderRadius: 16,
+    padding: 24,
+    fontSize: 18,
+    fontFamily: "Newsreader_400Regular",
+    color: TEXT_PRIMARY,
+    height: 350,
+    lineHeight: 30,
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+        transition: 'border-color 0.2s ease',
+        resize: 'vertical',
+      },
+    }),
+  },
+  openEndedInputFocused: {
+    borderColor: OCEAN_BRIGHT,
+  },
+  wordCountContainer: {
+    marginTop: 12,
+    alignItems: "flex-end",
+  },
+  wordCountText: {
+    fontSize: 13,
+    fontFamily: "Newsreader_700Bold",
+    letterSpacing: 0.5,
+  },
+  wordCountValid: {
+    color: OCEAN_BRIGHT,
+  },
+  wordCountInvalid: {
+    color: ERROR_TEXT,
+  },
+
+  // ─── NAVIGATION ──────────────────────────────────────────────────────────
   navigationRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginTop: 48,
   },
   nextButton: {
-    backgroundColor: "#1c94a7",
+    backgroundColor: OCEAN_BRIGHT,
     paddingVertical: 18,
     paddingHorizontal: 48,
     borderRadius: 50,
@@ -208,25 +310,34 @@ export default StyleSheet.create({
     gap: 10,
     ...Platform.select({
       web: {
-        boxShadow: '0 6px 20px rgba(28, 148, 167, 0.3)',
+        boxShadow: '0 8px 24px rgba(28, 148, 167, 0.3)',
+        cursor: 'pointer',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
       },
     }),
   },
   nextButtonDisabled: {
-    backgroundColor: "#94A3B8",
+    backgroundColor: TEXT_MUTED,
     opacity: 0.5,
+    ...Platform.select({
+      web: {
+        cursor: 'not-allowed',
+        boxShadow: 'none',
+      },
+    }),
   },
   nextButtonText: {
-    color: "#FFFFFF",
+    color: WHITE,
     fontSize: 16,
     fontFamily: "Newsreader_700Bold",
+    letterSpacing: 0.5,
   },
 
-  // ─── Loading ─────────────────────────────────────────────────────────────
+  // ─── LOADING ─────────────────────────────────────────────────────────────
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F0F4F8",
+    backgroundColor: BG_PAGE,
   },
 });

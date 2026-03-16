@@ -31,7 +31,7 @@ const RegisterScreen = ({ navigation }) => {
     try {
       // 1. IMPORTANTE: Cambiamos localhost por 10.0.2.2 para que Android vea tu PC
       const response = await axios.post(
-        "http://localhost:8081/api/users/register",
+        "http://localhost:8080/api/users/register",
         {
           username: username,
           email: email,

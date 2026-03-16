@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Linking } from "react-native";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import axios from "axios";
 import styles from "../styles/unitStyles.js";
 
@@ -93,20 +94,21 @@ const InlineText = ({ text, base, em }) => {
 // ─── Callout Box ─────────────────────────────────────────────────────────────
 
 const CALLOUT_CFG = {
-  'KEY CONCEPT': { icon: '💡', color: '#0369a1', bg: '#eff8ff', border: '#3b82f6' },
-  'IMPORTANT': { icon: '⚠️', color: '#b45309', bg: '#fffbeb', border: '#f59e0b' },
-  'NOTE': { icon: '📌', color: '#6d28d9', bg: '#f5f3ff', border: '#8b5cf6' },
-  'EXAMPLE': { icon: '📝', color: '#065f46', bg: '#ecfdf5', border: '#10b981' },
-  'DEFINITION': { icon: '📖', color: '#9f1239', bg: '#fff1f2', border: '#f43f5e' },
-  'REMEMBER': { icon: '🧠', color: '#1c94a7', bg: '#e8f7f9', border: '#1c94a7' },
+  'KEY CONCEPT': { iconName: 'lightbulb-on-outline', iconLib: 'material', color: '#0369a1', bg: '#eff8ff', border: '#3b82f6' },
+  'IMPORTANT': { iconName: 'alert-circle-outline', iconLib: 'ionicon', color: '#b45309', bg: '#fffbeb', border: '#f59e0b' },
+  'NOTE': { iconName: 'pin-outline', iconLib: 'ionicon', color: '#6d28d9', bg: '#f5f3ff', border: '#8b5cf6' },
+  'EXAMPLE': { iconName: 'create-outline', iconLib: 'ionicon', color: '#065f46', bg: '#ecfdf5', border: '#10b981' },
+  'DEFINITION': { iconName: 'book-open-outline', iconLib: 'material', color: '#9f1239', bg: '#fff1f2', border: '#f43f5e' },
+  'REMEMBER': { iconName: 'bulb-outline', iconLib: 'ionicon', color: '#1c94a7', bg: '#e8f7f9', border: '#1c94a7' },
 };
 
 const CalloutBox = ({ keyword, text }) => {
   const cfg = CALLOUT_CFG[keyword] || CALLOUT_CFG['NOTE'];
+  const IconComponent = cfg.iconLib === 'material' ? MaterialCommunityIcons : Ionicons;
   return (
     <View style={[styles.callout, { backgroundColor: cfg.bg, borderLeftColor: cfg.border }]}>
       <View style={styles.calloutHeader}>
-        <Text style={styles.calloutIcon}>{cfg.icon}</Text>
+        <IconComponent name={cfg.iconName} size={18} color={cfg.color} />
         <Text style={[styles.calloutLabel, { color: cfg.color }]}>{keyword}</Text>
       </View>
       {!!text && <Text style={styles.calloutText}>{text}</Text>}
@@ -190,14 +192,14 @@ const UnitTab = ({ unit, index, isActive, onPress }) => (
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 const UnitScreen = ({ route, navigation }) => {
-  const { courseId } = route.params;
+  const { courseId, examType } = route.params;
   const [courseData, setCourseData] = useState(null);
   const [activeUnit, setActiveUnit] = useState(null);
   const [loading, setLoading] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
-    axios.get(`http://localhost:8081/api/units/course/${courseId}`)
+    axios.get(`http://localhost:8080/api/units/course/${courseId}`)
       .then(res => {
         setCourseData(res.data);
         if (res.data.units?.length > 0) setActiveUnit(res.data.units[0]);
@@ -245,9 +247,12 @@ const UnitScreen = ({ route, navigation }) => {
           <TouchableOpacity
             style={styles.knowledgeButton}
             activeOpacity={0.85}
-            onPress={() => navigation.navigate('Test')}
+            onPress={() => navigation.navigate('Test', { courseId, examType, sectionName: courseData?.courseName })}
           >
-            <Text style={styles.knowledgeButtonText}>✓  Check your knowledge</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />
+              <Text style={styles.knowledgeButtonText}>Check your knowledge</Text>
+            </View>
           </TouchableOpacity>
         </View>
       </View>
@@ -284,9 +289,9 @@ const UnitScreen = ({ route, navigation }) => {
             <TouchableOpacity
               style={styles.pdfButton}
               activeOpacity={0.8}
-              onPress={() => Linking.openURL(`http://localhost:8081/api/courses/${courseId}/formula-sheet`)}
+              onPress={() => Linking.openURL(`http://localhost:8080/api/courses/${courseId}/formula-sheet`)}
             >
-              <Text style={styles.pdfButtonIcon}>📄</Text>
+              <Ionicons name="document-text-outline" size={18} color="#15803d" />
               <Text style={styles.pdfButtonText}>Formula Sheet PDF</Text>
             </TouchableOpacity>
           )}
