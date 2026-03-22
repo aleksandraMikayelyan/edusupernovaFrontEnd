@@ -1,32 +1,31 @@
 {
-  "name": "edusupernovav2",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "edusupernova-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .js,.jsx"
   },
   "dependencies": {
-    "@expo-google-fonts/cookie": "^0.4.1",
-    "@expo-google-fonts/newsreader": "^0.4.1",
-    "@expo/vector-icons": "^15.1.1",
-    "@react-native-async-storage/async-storage": "2.2.0",
-    "@react-navigation/native": "^7.1.28",
-    "@react-navigation/native-stack": "^7.11.0",
-    "@react-navigation/stack": "^7.6.16",
-    "axios": "^1.13.5",
-    "expo": "~54.0.32",
-    "expo-font": "~14.0.11",
-    "expo-status-bar": "~3.0.9",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "react-hook-form": "^7.71.1",
-    "react-native": "0.81.5",
-    "react-native-safe-area-context": "~5.6.0",
-    "react-native-screens": "~4.16.0",
-    "react-native-web": "^0.21.0"
+    "@phosphor-icons/react": "^2.1.10",
+    "axios": "^1.7.2",
+    "lucide-react": "^0.577.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^6.24.0"
   },
-  "private": true
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "postcss": "^8.4.39",
+    "tailwind-scrollbar-hide": "^1.1.7",
+    "tailwindcss": "^3.4.6",
+    "vite": "^5.3.3"
+  }
 }
