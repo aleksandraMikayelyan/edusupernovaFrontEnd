@@ -49,7 +49,7 @@ export const ENDPOINTS = {
   //   Method : GET
   //   Params : none (testId is in the path)
   //
-  feedbackResult: (testId) => `${API_BASE}/feedback/${testId}`,
+  feedbackResult: (testId) => `${API_BASE}/api/feedback/${testId}`,
 };
 
 // ─── Shared domain constants ──────────────────────────────────────────────────

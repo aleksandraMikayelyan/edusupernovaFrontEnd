@@ -1,25 +1,32 @@
 /**
- * ScorePill.jsx — Score display (WEB) — redesigned 2026
- * Animated score reveal with colour-coded feedback message.
+ * ScorePill.jsx — Score display (WEB)
+ *
+ * Props:
+ *   mark        — display string (grade letter, percentage string, or null)
+ *   finalScore  — raw Double from FeedBackDTO (0-100), used for colour theme
  */
 
 import { useEffect, useState } from "react";
 
 const SERIF = "Newsreader, Georgia, serif";
 
-const getTheme = (raw) => {
-  if (!raw) return { bg:"#e8f7f9", text:"#0a5f6e", border:"#1c94a7", label:"Results ready", emoji:"📊" };
-  const n = parseFloat(raw);
-  if (n >= 8)  return { bg:"#f0fdf4", text:"#15803d", border:"#86efac", label:"Excellent work!", emoji:"🏆" };
-  if (n >= 5)  return { bg:"#fff8e6", text:"#a06a00", border:"#f5a623", label:"Good effort",    emoji:"📈" };
-  return             { bg:"#fff0f0", text:"#b02020", border:"#e74c3c", label:"Keep practising", emoji:"💪" };
+const getTheme = (finalScore) => {
+  if (finalScore == null) {
+    return { bg:"#e8f7f9", text:"#0a5f6e", border:"#1c94a7", label:"Results ready", emoji:"📊" };
+  }
+  if (finalScore >= 75) return { bg:"#f0fdf4", text:"#15803d", border:"#86efac", label:"Excellent work!", emoji:"🏆" };
+  if (finalScore >= 50) return { bg:"#fff8e6", text:"#a06a00", border:"#f5a623", label:"Good effort",    emoji:"📈" };
+  return                       { bg:"#fff0f0", text:"#b02020", border:"#e74c3c", label:"Keep practising", emoji:"💪" };
 };
 
-const ScorePill = ({ mark }) => {
+const ScorePill = ({ mark, finalScore }) => {
   const [show, setShow] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setShow(true), 300); return () => clearTimeout(t); }, []);
+  useEffect(() => {
+    const t = setTimeout(() => setShow(true), 300);
+    return () => clearTimeout(t);
+  }, []);
 
-  const theme = getTheme(mark);
+  const theme = getTheme(finalScore);
 
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:12 }}>

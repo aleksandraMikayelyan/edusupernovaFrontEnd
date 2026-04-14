@@ -1,82 +1,105 @@
 /**
- * MultipleChoiceAnswer.jsx — MC answer display (WEB)
+ * MultipleChoiceAnswer.jsx — MC answer + AI feedback display (WEB)
  *
- * FIX: correctAnswer is stored as a letter ("D") but userResponse is the
- * full option text ("D) The opportunity cost...").
- * Normalise both sides before comparing:
- *   extract the leading letter from userResponse → "D) ..." → "D"
- *   then compare with correctAnswer letter.
+ * Reads from FeedBackDTO.QuestionFeedbackDTO:
+ *   userResponse  — letter the student chose (A/B/C/D)
+ *   correctAnswer — correct letter from DB
+ *   isCorrect     — Boolean from backend evaluation
+ *   explanation   — static explanation from DB
+ *   aiFeedback    — Groq-generated feedback (generated for every MCQ answer)
  */
 
+const BRAND = "#0a5f6e";
 const SERIF = "Newsreader, Georgia, serif";
 
-/** Extracts the leading letter from an option string.
- *  "D) Some text" → "D"
- *  "D"            → "D"
- *  "Some text"    → "Some text"  (unchanged if no letter prefix)
- */
-const extractLetter = (str = "") => {
-  const match = str.trim().match(/^([A-D])[)\.\s]/i);
-  return match ? match[1].toUpperCase() : str.trim();
-};
-
 const MultipleChoiceAnswer = ({ item }) => {
-  const userResponse  = item.userResponse    ?? item.userAnswer    ?? "";
-  const correctAnswer = item.correctResponse ?? item.correctAnswer ?? "";
-
-  // Normalise: compare letters only
-  const userLetter    = extractLetter(userResponse);
-  const correctLetter = extractLetter(correctAnswer);
-  const isCorrect     = userLetter === correctLetter;
+  const userResponse  = item.userResponse  ?? "";
+  const correctAnswer = item.correctAnswer ?? "";
+  const isCorrect     = item.isCorrect     ?? false;
+  const explanation   = item.explanation   ?? "";
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
 
-      {/* Wrong answer — only shown when incorrect */}
-      {!isCorrect && (
-        <div style={{ display:"flex", alignItems:"flex-start", gap:12,
-          padding:"14px 16px", borderRadius:12,
-          background:"#fff0f0", border:"1.5px solid #e74c3c" }}>
-          <span style={{ fontFamily:SERIF, fontSize:11, fontWeight:700,
-            letterSpacing:"0.1em", textTransform:"uppercase",
-            color:"#b02020", flexShrink:0, paddingTop:2 }}>
-            Your answer
-          </span>
-          <span style={{ fontFamily:SERIF, fontSize:15,
-            color:"#b02020", lineHeight:1.6, flex:1 }}>
-            {userResponse || "No answer provided"}
-          </span>
+      {/* Answer comparison row */}
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        {/* Your answer */}
+        <div style={{
+          flex: 1, minWidth: 140,
+          display: "flex", alignItems: "center", gap: 10,
+          padding: "12px 16px", borderRadius: 12,
+          background: isCorrect ? "#f0fdf4" : "#fff0f0",
+          border: `1.5px solid ${isCorrect ? "#86efac" : "#fca5a5"}`,
+        }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+            background: isCorrect ? "#15803d" : "#b02020",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <span style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 700, color: "#fff" }}>
+              {userResponse || "–"}
+            </span>
+          </div>
+          <div>
+            <p style={{ fontFamily: SERIF, fontSize: 10, fontWeight: 700,
+              color: isCorrect ? "#15803d" : "#b02020",
+              textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>
+              Your answer
+            </p>
+            <p style={{ fontFamily: SERIF, fontSize: 13,
+              color: isCorrect ? "#15803d" : "#b02020", margin: 0, marginTop: 1 }}>
+              {isCorrect ? "Correct!" : "Incorrect"}
+            </p>
+          </div>
         </div>
-      )}
 
-      {/* Correct answer — always shown */}
-      <div style={{ display:"flex", alignItems:"flex-start", gap:12,
-        padding:"14px 16px", borderRadius:12,
-        background:"#f0fdf4", border:"1.5px solid #86efac" }}>
-        <span style={{ fontFamily:SERIF, fontSize:11, fontWeight:700,
-          letterSpacing:"0.1em", textTransform:"uppercase",
-          color:"#15803d", flexShrink:0, paddingTop:2 }}>
-          Correct
-        </span>
-        <span style={{ fontFamily:SERIF, fontSize:15,
-          color:"#15803d", lineHeight:1.6, flex:1 }}>
-          {correctAnswer || "Not available"}
-        </span>
+        {/* Correct answer — only if wrong */}
+        {!isCorrect && (
+          <div style={{
+            flex: 1, minWidth: 140,
+            display: "flex", alignItems: "center", gap: 10,
+            padding: "12px 16px", borderRadius: 12,
+            background: "#f0fdf4", border: "1.5px solid #86efac",
+          }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+              background: "#15803d",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <span style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 700, color: "#fff" }}>
+                {correctAnswer || "–"}
+              </span>
+            </div>
+            <div>
+              <p style={{ fontFamily: SERIF, fontSize: 10, fontWeight: 700,
+                color: "#15803d", textTransform: "uppercase",
+                letterSpacing: "0.1em", margin: 0 }}>
+                Correct answer
+              </p>
+              <p style={{ fontFamily: SERIF, fontSize: 13, color: "#15803d",
+                margin: 0, marginTop: 1 }}>
+                Answer {correctAnswer}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Correct indicator */}
-      {isCorrect && (
-        <div style={{ display:"flex", alignItems:"center", gap:10,
-          padding:"10px 14px", background:"#f0fdf4", borderRadius:10 }}>
-          <div style={{ width:20, height:20, borderRadius:"50%",
-            background:"#15803d", display:"flex",
-            alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-            <span style={{ color:"#fff", fontSize:11, fontWeight:700 }}>✓</span>
-          </div>
-          <span style={{ fontFamily:SERIF, fontSize:13,
-            fontWeight:600, color:"#15803d" }}>
-            You got this one right!
-          </span>
+      {/* DB explanation — no AI needed for MCQ, correct answer is in DB */}
+      {explanation && (
+        <div style={{
+          background: "#F8FAFC", borderRadius: 14, padding: "14px 18px",
+          border: "1px solid #E2EBF0",
+        }}>
+          <p style={{ fontFamily: SERIF, fontSize: 10, fontWeight: 700,
+            color: "#94A3B8", textTransform: "uppercase",
+            letterSpacing: "0.12em", marginBottom: 8 }}>
+            Explanation
+          </p>
+          <p style={{ fontFamily: SERIF, fontSize: 14, color: "#374151",
+            lineHeight: 1.7, margin: 0 }}>
+            {explanation}
+          </p>
         </div>
       )}
     </div>

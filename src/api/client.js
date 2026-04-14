@@ -5,14 +5,20 @@
  *   SRP  — only responsible for creating/configuring the axios instance
  *   DIP  — all other modules depend on this abstraction, not on axios directly
  *
- * Auth token is injected via request interceptor so every module
- * gets it automatically — no more `const headers = { Authorization: ... }`
- * copy-pasted across every screen.
+ * Token is held in module-level memory (not localStorage).
+ * AuthContext calls setAuthToken() after login/register and on logout.
+ * On page refresh _token resets to null → user must re-authenticate.
  */
 
 import axios from "axios";
 
-const TOKEN_KEY = "edu_access_token";
+// ── In-memory token (never localStorage) ─────────────────────────────────────
+let _token = null;
+
+/** Called by AuthContext whenever the token changes (set or cleared). */
+export const setAuthToken = (token) => { _token = token; };
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 const client = axios.create({
   baseURL: "/api",         // Vite proxy forwards to Spring Boot :8080
@@ -22,20 +28,30 @@ const client = axios.create({
 
 // ── Request interceptor — attach JWT automatically ─────────────────────────
 client.interceptors.request.use((config) => {
-  const token = localStorage.getItem(TOKEN_KEY);
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (_token) config.headers.Authorization = `Bearer ${_token}`;
   return config;
 });
 
-// ── Response interceptor — handle 401 globally ────────────────────────────
+// ── Response interceptor — extract ApiErrorDTO.message, handle 401 ─────────
 client.interceptors.response.use(
   (res) => res,
   (err) => {
+    // Extract the human-readable message from ApiErrorDTO
+    const message =
+      err.response?.data?.message ||
+      err.response?.data?.error   ||
+      (err.response ? `Server error ${err.response.status}` : "Network error");
+
     if (err.response?.status === 401) {
-      localStorage.removeItem(TOKEN_KEY);
+      _token = null;
       window.location.href = "/login";
     }
-    return Promise.reject(err);
+
+    // Re-throw as a plain Error so components just use err.message
+    const error    = new Error(message);
+    error.status   = err.response?.status;
+    error.data     = err.response?.data;
+    return Promise.reject(error);
   }
 );
 

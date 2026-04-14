@@ -12,13 +12,12 @@
  *   /admin         → AdminInterface (protected, admin only)
  *   *              → redirect to /
  *
- * ProtectedRoute:
- *   Checks for a stored auth token (via useAuth).
- *   If not authenticated → redirects to /login.
- *   This replaces navigation.replace("Login") from React Native.
+ * AuthProvider wraps everything so all screens share the same auth state.
+ * ProtectedRoute reads from AuthContext — no more isolated useState copies.
  */
 
 import { Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext.jsx";
 import useAuth from "./hooks/useAuth.js";
 
 // ── Public screens ────────────────────────────────────────────────────────────
@@ -37,28 +36,18 @@ import AdminInterface from "./screens/AdminInterface.jsx";
 
 // ─── Auth guard ───────────────────────────────────────────────────────────────
 
-/**
- * Wraps any route that requires authentication.
- * If the user has no token → redirect to /login.
- * adminOnly flag also checks the stored role.
- */
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { isAuthenticated, isAdmin } = useAuth();
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (adminOnly && !isAdmin) {
-    return <Navigate to="/courses" replace />;
-  }
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (adminOnly && !isAdmin) return <Navigate to="/courses" replace />;
 
   return children;
 };
 
-// ─── App ──────────────────────────────────────────────────────────────────────
+// ─── Routes (must be inside AuthProvider) ────────────────────────────────────
 
-const App = () => (
+const AppRoutes = () => (
   <Routes>
 
     {/* ── Public ── */}
@@ -67,53 +56,26 @@ const App = () => (
     <Route path="/register" element={<Register />} />
 
     {/* ── Student (protected) ── */}
-    <Route
-      path="/courses"
-      element={
-        <ProtectedRoute>
-          <UserInterface />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/units"
-      element={
-        <ProtectedRoute>
-          <Units />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/test"
-      element={
-        <ProtectedRoute>
-          <Test />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/feedback"
-      element={
-        <ProtectedRoute>
-          <FeedbackPage />
-        </ProtectedRoute>
-      }
-    />
+    <Route path="/courses"  element={<ProtectedRoute><UserInterface /></ProtectedRoute>} />
+    <Route path="/units"    element={<ProtectedRoute><Units /></ProtectedRoute>} />
+    <Route path="/test"     element={<ProtectedRoute><Test /></ProtectedRoute>} />
+    <Route path="/feedback" element={<ProtectedRoute><FeedbackPage /></ProtectedRoute>} />
 
     {/* ── Admin (protected + role check) ── */}
-    <Route
-      path="/admin"
-      element={
-        <ProtectedRoute adminOnly>
-          <AdminInterface />
-        </ProtectedRoute>
-      }
-    />
+    <Route path="/admin"    element={<ProtectedRoute adminOnly><AdminInterface /></ProtectedRoute>} />
 
     {/* ── Catch-all ── */}
     <Route path="*" element={<Navigate to="/" replace />} />
 
   </Routes>
+);
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+
+const App = () => (
+  <AuthProvider>
+    <AppRoutes />
+  </AuthProvider>
 );
 
 export default App;
