@@ -4,7 +4,7 @@
  */
 
 import { useNavigate, useLocation } from "react-router-dom";
-import { House, Books, User } from "@phosphor-icons/react";
+import { House, Books, User }       from "@phosphor-icons/react";
 import { MAIN_TABS } from "../../constants/navTab.js";
 
 const SERIF  = "Newsreader, Georgia, serif";
@@ -51,6 +51,36 @@ const NavTab = ({ icon, label, path }) => {
   );
 };
 
+const ProfileAvatar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isActive = location.pathname === "/profile";
+
+  return (
+    <div
+      onClick={() => navigate("/profile")}
+      title="My Profile"
+      style={{
+        width: 32, height: 32, borderRadius: "50%",
+        background: isActive ? "rgba(93,202,165,0.25)" : "rgba(255,255,255,0.10)",
+        border: `1.5px solid ${isActive ? "rgba(93,202,165,0.6)" : "rgba(255,255,255,0.18)"}`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        cursor: "pointer", transition: "background 0.15s, border-color 0.15s",
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.background = "rgba(93,202,165,0.2)";
+        e.currentTarget.style.borderColor = "rgba(93,202,165,0.5)";
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.background = isActive ? "rgba(93,202,165,0.25)" : "rgba(255,255,255,0.10)";
+        e.currentTarget.style.borderColor = isActive ? "rgba(93,202,165,0.6)" : "rgba(255,255,255,0.18)";
+      }}
+    >
+      <User size={15} weight="duotone" color={isActive ? "#5DCAA5" : "rgba(255,255,255,0.8)"} />
+    </div>
+  );
+};
+
 const AppHeader = ({ extraLinks = [] }) => (
   <header style={{
     height: 56, flexShrink: 0,
@@ -82,18 +112,7 @@ const AppHeader = ({ extraLinks = [] }) => (
         margin: "0 8px", flexShrink: 0,
       }} />
 
-      <div style={{
-        width: 32, height: 32, borderRadius: "50%",
-        background: "rgba(255,255,255,0.10)",
-        border: "1.5px solid rgba(255,255,255,0.18)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        cursor: "pointer", transition: "background 0.15s",
-      }}
-        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.18)"}
-        onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.10)"}
-      >
-        <User size={15} weight="duotone" color="rgba(255,255,255,0.8)" />
-      </div>
+      <ProfileAvatar />
     </div>
   </header>
 );

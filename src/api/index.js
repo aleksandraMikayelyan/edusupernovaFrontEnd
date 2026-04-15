@@ -40,13 +40,19 @@ export const AuthApi = {
 
 export const CoursesApi = {
   /** Returns List<ExamDTO> */
-  getExams:         ()         => client.get("/exams/dashboard"),
+  getExams:          ()                   => client.get("/exams/dashboard"),
   /** Returns List<CourseDTO> — each course includes papers[] */
-  getCoursesByExam: (examId)   => client.get(`/exams/${examId}`),
+  getCoursesByExam:  (examId)             => client.get(`/exams/${examId}`),
   /** Returns CourseUnitsResponse { courseName, courseIcon, units: UnitDTO[] } */
-  getUnits:         (courseId) => client.get(`/units/course/${courseId}`),
+  getUnits:          (courseId)           => client.get(`/units/course/${courseId}`),
   /** Returns a URL string (used to open PDF in new tab) */
-  getFormulaSheet:  (courseId) => `/api/courses/${courseId}/formula-sheet`,
+  getFormulaSheet:   (courseId)           => `/api/courses/${courseId}/formula-sheet`,
+  /** Returns Boolean — true if user is already enrolled in the exam */
+  checkEnrollment:   (examId, userId)     => client.get(`/exams/${examId}/status?userId=${userId}`),
+  /** Enroll user in exam. Returns 200 "Enrollment successful" or 400 if already enrolled */
+  enroll:            (examId, userId)     => client.post(`/exams/${examId}/enroll?userId=${userId}`),
+  /** Unenroll user from exam */
+  unenroll:          (examId, userId)     => client.delete(`/exams/${examId}/unenroll?userId=${userId}`),
 };
 
 // ── Enrollments ───────────────────────────────────────────────────────────────
@@ -100,4 +106,20 @@ export const TestsApi = {
 export const FeedbackApi = {
   /** Poll until openEndedPending = false */
   poll: (testId) => client.get(`/feedback/${testId}`),
+};
+
+// ── Progress / Analytics ──────────────────────────────────────────────────────
+
+export const ProgressApi = {
+  /**
+   * Returns per-exam, per-course progress for the authenticated user.
+   * Response: List<ExamProgressDTO>
+   *   ExamProgressDTO  { examId, examName, examIcon, courses: CourseProgressDTO[] }
+   *   CourseProgressDTO { courseId, courseName, courseIcon, totalLessons,
+   *                       completedLessons, averageQuizScore, passPercentage }
+   *
+   * Pass% formula (server-side):
+   *   passPercentage = (completedLessons / totalLessons) × averageQuizScore
+   */
+  getMyProgress: () => client.get("/progress/me"),
 };

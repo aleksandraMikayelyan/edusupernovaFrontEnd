@@ -5,8 +5,9 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookOpen } from "@phosphor-icons/react";
+import { Books } from "@phosphor-icons/react";
 import { CoursesApi } from "../api/index.js";
+import useAuth    from "../hooks/useAuth.js";
 import AppHeader  from "../components/common/appHeader.jsx";
 import AppFooter  from "../components/common/appFooter.jsx";
 import ExamCard   from "../components/userInterface/ExamCard.jsx";
@@ -61,6 +62,7 @@ const CardSkeleton = () => (
 
 const UserInterface = () => {
   const navigate = useNavigate();
+  const { userId } = useAuth();
   const [coursesRef, coursesInView] = useInView(0.1);
 
   const [exams,          setExams]          = useState([]);
@@ -69,6 +71,12 @@ const UserInterface = () => {
   const [loading,        setLoading]        = useState(true);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [networkError,   setNetworkError]   = useState(false);
+
+  // ── Enrollment state ──────────────────────────────────────────────────────
+  const [isEnrolled,    setIsEnrolled]    = useState(false);
+  const [enrollChecked, setEnrollChecked] = useState(false); // true once status fetched
+  const [enrolling,     setEnrolling]     = useState(false);
+  const [enrollError,   setEnrollError]   = useState(null);
 
   useEffect(() => {
     CoursesApi.getExams()
@@ -92,20 +100,59 @@ const UserInterface = () => {
     if (!exam?.id || selectedExam?.id === exam.id) return;
     setSelectedExam(exam);
     setCourses([]);
+    setEnrollChecked(false);
+    setEnrollError(null);
     setLoadingCourses(true);
+
     try {
-      const res = await CoursesApi.getCoursesByExam(exam.id);
-      if (Array.isArray(res.data)) {
+      const [coursesRes, statusRes] = await Promise.allSettled([
+        CoursesApi.getCoursesByExam(exam.id),
+        userId ? CoursesApi.checkEnrollment(exam.id, userId) : Promise.resolve({ data: false }),
+      ]);
+
+      if (coursesRes.status === "fulfilled" && Array.isArray(coursesRes.value.data)) {
         const seen = new Set();
-        setCourses(res.data.filter(c => {
+        setCourses(coursesRes.value.data.filter(c => {
           const key = c.coursename?.toLowerCase();
           if (!key || seen.has(key)) return false;
           seen.add(key);
           return true;
         }));
       }
+
+      if (statusRes.status === "fulfilled") {
+        setIsEnrolled(!!statusRes.value.data);
+      }
     } catch {}
-    finally { setLoadingCourses(false); }
+    finally {
+      setLoadingCourses(false);
+      setEnrollChecked(true);
+    }
+  };
+
+  const handleEnroll = async () => {
+    if (!selectedExam?.id || !userId || enrolling) return;
+    setEnrolling(true);
+    setEnrollError(null);
+    try {
+      await CoursesApi.enroll(selectedExam.id, userId);
+      setIsEnrolled(true);
+    } catch (err) {
+      setEnrollError(err.message ?? "Enrollment failed. Please try again.");
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
+  const handleUnenroll = async () => {
+    if (!selectedExam?.id || !userId || enrolling) return;
+    if (!window.confirm(`Unenroll from ${selectedExam.examname}? Your progress data will be kept.`)) return;
+    setEnrolling(true);
+    try {
+      await CoursesApi.unenroll(selectedExam.id, userId);
+      setIsEnrolled(false);
+    } catch {}
+    finally { setEnrolling(false); }
   };
 
   const handleSelectCourse = (course) =>
@@ -198,6 +245,110 @@ const UserInterface = () => {
         {/* ── Course grid ── */}
         {selectedExam && (
           <div ref={coursesRef}>
+
+            {/* ── Enrollment banner ── */}
+            {enrollChecked && (
+              <div style={{
+                marginBottom: 24,
+                animation: "fadeUp 0.4s ease both",
+              }}>
+                {isEnrolled ? (
+                  /* Enrolled state */
+                  <div style={{
+                    display: "flex", alignItems: "center",
+                    justifyContent: "space-between", flexWrap: "wrap", gap: 12,
+                    background: "linear-gradient(135deg, #f0fdf4, #e8f7f0)",
+                    border: "1.5px solid rgba(21,128,61,0.2)",
+                    borderRadius: 16, padding: "14px 20px",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{
+                        width: 20, height: 20, borderRadius: "50%",
+                        background: "#15803d", display: "flex",
+                        alignItems: "center", justifyContent: "center",
+                        flexShrink: 0, fontSize: 12, color: "#fff", fontWeight: 700,
+                      }}>
+                        ✓
+                      </div>
+                      <span style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 700,
+                        color: "#15803d" }}>
+                        Enrolled in {selectedExam.examname}
+                      </span>
+                      <span style={{ fontFamily: SERIF, fontSize: 13, color: "#16a34a" }}>
+                        — your progress is being tracked
+                      </span>
+                    </div>
+                    <button onClick={handleUnenroll} disabled={enrolling}
+                      style={{
+                        fontFamily: SERIF, fontSize: 12, fontWeight: 700,
+                        color: "#94A3B8", background: "none", border: "none",
+                        cursor: "pointer", textDecoration: "underline",
+                        opacity: enrolling ? 0.5 : 1,
+                      }}>
+                      Unenroll
+                    </button>
+                  </div>
+                ) : (
+                  /* Not enrolled — prompt to enroll */
+                  <div style={{
+                    display: "flex", alignItems: "center",
+                    justifyContent: "space-between", flexWrap: "wrap", gap: 12,
+                    background: "#fff",
+                    border: `1.5px solid ${enrollError ? "#fca5a5" : "#E2EBF0"}`,
+                    borderRadius: 16, padding: "14px 20px",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                  }}>
+                    <div>
+                      <p style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 700,
+                        color: "#0F172A", margin: 0 }}>
+                        Track your progress in {selectedExam.examname}
+                      </p>
+                      <p style={{ fontFamily: SERIF, fontSize: 13, color: "#64748B", margin: 0 }}>
+                        Enroll to save your scores and see analytics in your profile.
+                      </p>
+                      {enrollError && (
+                        <p style={{ fontFamily: SERIF, fontSize: 12, color: "#b02020", margin: "4px 0 0" }}>
+                          {enrollError}
+                        </p>
+                      )}
+                    </div>
+                    <button onClick={handleEnroll} disabled={enrolling}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 8,
+                        padding: "11px 24px", borderRadius: 12, border: "none",
+                        fontFamily: SERIF, fontSize: 14, fontWeight: 700,
+                        cursor: enrolling ? "not-allowed" : "pointer",
+                        background: enrolling ? "#E8EDF2" : MINT,
+                        color: enrolling ? "#94A3B8" : DARK,
+                        boxShadow: enrolling ? "none" : "0 6px 20px rgba(93,202,165,0.35)",
+                        transition: "all 0.18s", flexShrink: 0,
+                      }}
+                      onMouseEnter={e => { if (!enrolling) {
+                        e.currentTarget.style.transform = "translateY(-1px)";
+                        e.currentTarget.style.background = "#3aab87";
+                      }}}
+                      onMouseLeave={e => { if (!enrolling) {
+                        e.currentTarget.style.transform = "none";
+                        e.currentTarget.style.background = MINT;
+                      }}}
+                    >
+                      {enrolling ? (
+                        <>
+                          <div style={{
+                            width: 14, height: 14, borderRadius: "50%",
+                            border: "2px solid rgba(6,47,55,0.15)",
+                            borderTopColor: DARK,
+                            animation: "uispin 0.7s linear infinite", flexShrink: 0,
+                          }} />
+                          Enrolling…
+                        </>
+                      ) : "Enroll now"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div style={{
               display:"flex", alignItems:"flex-end",
               justifyContent:"space-between", marginBottom:24,
@@ -256,7 +407,7 @@ const UserInterface = () => {
               background:"#e8f7f9",
               display:"flex", alignItems:"center", justifyContent:"center",
               boxShadow:"0 8px 24px rgba(10,95,110,0.12)" }}>
-              <BookOpen size={32} weight="duotone" color={BRAND} />
+              <Books size={32} weight="duotone" color={BRAND} />
             </div>
             <div style={{ textAlign:"center" }}>
               <p style={{ fontFamily:SERIF, fontSize:18, fontWeight:700,

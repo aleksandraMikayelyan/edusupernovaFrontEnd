@@ -30,6 +30,7 @@ import UserInterface from "./screens/UserInterface.jsx";
 import Units         from "./screens/Units.jsx";
 import Test          from "./screens/Test.jsx";
 import FeedbackPage  from "./screens/FeedbackPage.jsx";
+import Profile       from "./screens/Profile.jsx";
 
 // ── Admin screens ─────────────────────────────────────────────────────────────
 import AdminInterface from "./screens/AdminInterface.jsx";
@@ -60,6 +61,7 @@ const AppRoutes = () => (
     <Route path="/units"    element={<ProtectedRoute><Units /></ProtectedRoute>} />
     <Route path="/test"     element={<ProtectedRoute><Test /></ProtectedRoute>} />
     <Route path="/feedback" element={<ProtectedRoute><FeedbackPage /></ProtectedRoute>} />
+    <Route path="/profile"  element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
     {/* ── Admin (protected + role check) ── */}
     <Route path="/admin"    element={<ProtectedRoute adminOnly><AdminInterface /></ProtectedRoute>} />

@@ -21,6 +21,8 @@ import LoadingScreen         from "../components/common/LoadingScreen.jsx";
 import SaveIndicator         from "../components/test/SaveIndicator.jsx";
 import DataResponseTest      from "./DataResponseTest.jsx";
 import EssayTest             from "./EssayTest.jsx";
+import ReadingWritingTest    from "./ReadingWritingTest.jsx";
+import MultiEssayTest        from "./MultiEssayTest.jsx";
 import useAutosave           from "../hooks/useAutosave.js";
 
 const DARK  = "#062f37";
@@ -176,8 +178,10 @@ const TestScreen = () => {
   // ── Format-based dispatch ─────────────────────────────────────────────────
   if (session) {
     const fmt = session.paperFormat?.toUpperCase();
-    if (fmt === "DATA_RESPONSE") return <DataResponseTest session={session} />;
-    if (fmt === "ESSAY")         return <EssayTest        session={session} />;
+    if (fmt === "DATA_RESPONSE")   return <DataResponseTest   session={session} />;
+    if (fmt === "READING_WRITING") return <ReadingWritingTest session={session} />;
+    if (fmt === "MULTI_ESSAY")     return <MultiEssayTest     session={session} />;
+    if (fmt === "ESSAY")           return <EssayTest          session={session} />;
     // MCQ / default: falls through to the Paper 1 UI below
   }
 
