@@ -34,6 +34,8 @@ export const AuthApi = {
   login:    (email, password)           => client.post("/users/login",    { email, password }),
   /** Returns AuthResponse. rol is NOT sent — backend assigns STUDENT by default. */
   register: (username, email, password) => client.post("/users/register", { username, email, password }),
+  /** Google OAuth — send the Google ID token; backend returns AuthResponse */
+  googleAuth: (token)                   => client.post("/users/google-auth", { idToken: token }),
 };
 
 // ── Courses / Exams ───────────────────────────────────────────────────────────

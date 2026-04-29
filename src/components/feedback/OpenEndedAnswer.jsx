@@ -11,7 +11,7 @@ const BRAND = "#0a5f6e"; const SERIF = "Newsreader, Georgia, serif";
 
 /** Returns true if AI has not yet scored this question. */
 const isPending = (item) =>
-  item.aiScore == null || item.aiScore < 0 ||
+  item.aiScore == null ||
   item.aiFeedback === "AI evaluation in progress...";
 
 const Spinner = () => (

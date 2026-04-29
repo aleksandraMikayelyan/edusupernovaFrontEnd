@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { ArrowRight } from "@phosphor-icons/react";
+import { GoogleLogin } from "@react-oauth/google";
 import { AuthApi } from "../api/index.js";
 import useAuth from "../hooks/useAuth.js";
 import logoIcon from "../assets/iconoEdusupernovaSinFondo.png";
@@ -51,6 +52,19 @@ const LoginScreen = () => {
   };
 
   const handleKeyDown = e => { if (e.key === "Enter") handleLogin(); };
+
+  const handleGoogleSuccess = async ({ credential }) => {
+    setError("");
+    setLoading(true);
+    try {
+      const { data } = await AuthApi.googleAuth(credential);
+      if (!data.accessToken) { setError("Google login succeeded but no token received."); return; }
+      saveSession(data);
+      navigate(data.rol?.trim().toUpperCase() === "ADMIN" ? "/admin" : "/courses", { replace: true });
+    } catch (err) {
+      setError(err.message || "Google sign-in failed. Please try again.");
+    } finally { setLoading(false); }
+  };
 
   return (
     <div style={{ display:"flex", minHeight:"100vh" }}>
@@ -231,8 +245,28 @@ const LoginScreen = () => {
             }
           </button>
 
+          {/* ── Divider ── */}
+          <div style={{ display:"flex", alignItems:"center", gap:12, margin:"20px 0" }}>
+            <div style={{ flex:1, height:1, background:"#E2EBF0" }} />
+            <span style={{ fontFamily:SERIF, fontSize:13, color:"#94A3B8", whiteSpace:"nowrap" }}>or continue with</span>
+            <div style={{ flex:1, height:1, background:"#E2EBF0" }} />
+          </div>
+
+          {/* ── Google button ── */}
+          <div style={{ display:"flex", justifyContent:"center" }}>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError("Google sign-in was cancelled or failed.")}
+              theme="outline"
+              size="large"
+              shape="rectangular"
+              width="380"
+              text="continue_with"
+            />
+          </div>
+
           <p style={{ fontFamily:SERIF, fontSize:12,
-            color:"#CBD5E1", textAlign:"center", marginTop:20 }}>
+            color:"#CBD5E1", textAlign:"center", marginTop:16 }}>
             By signing in you agree to our{" "}
             <span style={{ color:"#94A3B8", cursor:"pointer" }}>Terms of Service</span>
           </p>

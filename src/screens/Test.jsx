@@ -23,6 +23,10 @@ import DataResponseTest      from "./DataResponseTest.jsx";
 import EssayTest             from "./EssayTest.jsx";
 import ReadingWritingTest    from "./ReadingWritingTest.jsx";
 import MultiEssayTest        from "./MultiEssayTest.jsx";
+import ReadingTest           from "./ReadingTest.jsx";
+import ListeningTest         from "./ListeningTest.jsx";
+import WritingTest           from "./WritingTest.jsx";
+import SpeakingTest          from "./SpeakingTest.jsx";
 import useAutosave           from "../hooks/useAutosave.js";
 
 const DARK  = "#062f37";
@@ -179,9 +183,14 @@ const TestScreen = () => {
   if (session) {
     const fmt = session.paperFormat?.toUpperCase();
     if (fmt === "DATA_RESPONSE")   return <DataResponseTest   session={session} />;
+    if (fmt === "READING_WRITING" && session.courseName === "Writing")
+                                   return <WritingTest        session={session} />;
     if (fmt === "READING_WRITING") return <ReadingWritingTest session={session} />;
     if (fmt === "MULTI_ESSAY")     return <MultiEssayTest     session={session} />;
     if (fmt === "ESSAY")           return <EssayTest          session={session} />;
+    if (fmt === "READING")         return <ReadingTest        session={session} />;
+    if (fmt === "LISTENING")       return <ListeningTest      session={session} />;
+    if (fmt === "SPEAKING")        return <SpeakingTest       session={session} />;
     // MCQ / default: falls through to the Paper 1 UI below
   }
 

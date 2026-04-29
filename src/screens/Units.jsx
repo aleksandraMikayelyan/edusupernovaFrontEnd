@@ -65,9 +65,14 @@ const UnitScreen = () => {
   // Prefer papers passed from the course listing (CourseDTO includes papers[]);
   // fall back to whatever getUnits returns if the backend happens to include them.
   const papers      = coursePapers.length > 0 ? coursePapers : (courseData?.papers ?? []);
-  const mcqPaper          = papers.find(p => p.format === "MCQ");
-  const essayPaper        = papers.find(p => p.format === "ESSAY");
-  const dataResponsePaper = papers.find(p => p.format === "DATA_RESPONSE");
+  const mcqPaper             = papers.find(p => p.format === "MCQ");
+  const essayPaper           = papers.find(p => p.format === "ESSAY");
+  const dataResponsePaper    = papers.find(p => p.format === "DATA_RESPONSE");
+  const readingWritingPaper  = papers.find(p => p.format === "READING_WRITING");
+  const multiEssayPaper      = papers.find(p => p.format === "MULTI_ESSAY");
+  const readingPaper         = papers.find(p => p.format === "READING");
+  const listeningPaper       = papers.find(p => p.format === "LISTENING");
+  const speakingPaper        = papers.find(p => p.format === "SPEAKING");
 
   // Content is served by the backend; it lives at activeUnit.content
   const summaryText = activeUnit?.content ?? "";
@@ -330,6 +335,154 @@ const UnitScreen = () => {
               >
                 <NotePencil size={16} weight="bold" />
                 Practice essay · {essayPaper.timeLimitMinutes} min
+              </button>
+            )}
+
+            {/* Reading + Writing (TOEFL / IELTS / SAT) */}
+            {readingWritingPaper && (
+              <button
+                onClick={() => navigate("/test", {
+                  state: { courseId, examType, paperId: readingWritingPaper.id,
+                           sectionName: courseData?.courseName } })}
+                style={{
+                  width:"100%", display:"flex", alignItems:"center", gap:9,
+                  padding:"10px 12px", borderRadius:12,
+                  border:`1.5px solid ${BRAND}`,
+                  background:"transparent", cursor:"pointer",
+                  fontFamily:SERIF, fontSize:13, fontWeight:700, color:BRAND,
+                  transition:"transform 0.15s, background 0.15s, color 0.15s",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.background = BRAND;
+                  e.currentTarget.style.color = "#fff";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = "none";
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = BRAND;
+                }}
+              >
+                <ListBullets size={16} weight="bold" />
+                Reading &amp; Writing · {readingWritingPaper.timeLimitMinutes} min
+              </button>
+            )}
+
+            {/* Reading (TOEFL Reading section) */}
+            {readingPaper && (
+              <button
+                onClick={() => navigate("/test", {
+                  state: { courseId, examType, paperId: readingPaper.id,
+                           sectionName: courseData?.courseName } })}
+                style={{
+                  width:"100%", display:"flex", alignItems:"center", gap:9,
+                  padding:"10px 12px", borderRadius:12, border:"none",
+                  background:MINT, cursor:"pointer",
+                  fontFamily:SERIF, fontSize:13, fontWeight:700, color:DARK,
+                  boxShadow:"0 4px 14px rgba(93,202,165,0.3)",
+                  transition:"transform 0.15s, background 0.15s",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.background = "#3aab87";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = "none";
+                  e.currentTarget.style.background = MINT;
+                }}
+              >
+                <CheckCircle size={16} weight="bold" />
+                Reading Practice · {readingPaper.timeLimitMinutes} min
+              </button>
+            )}
+
+            {/* Listening (TOEFL Listening section) */}
+            {listeningPaper && (
+              <button
+                onClick={() => navigate("/test", {
+                  state: { courseId, examType, paperId: listeningPaper.id,
+                           sectionName: courseData?.courseName } })}
+                style={{
+                  width:"100%", display:"flex", alignItems:"center", gap:9,
+                  padding:"10px 12px", borderRadius:12,
+                  border:`1.5px solid ${BRAND}`,
+                  background:"transparent", cursor:"pointer",
+                  fontFamily:SERIF, fontSize:13, fontWeight:700, color:BRAND,
+                  transition:"transform 0.15s, background 0.15s, color 0.15s",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.background = BRAND;
+                  e.currentTarget.style.color = "#fff";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = "none";
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = BRAND;
+                }}
+              >
+                <ListBullets size={16} weight="bold" />
+                Listening Practice · {listeningPaper.timeLimitMinutes} min
+              </button>
+            )}
+
+            {/* Speaking (TOEFL Speaking section) */}
+            {speakingPaper && (
+              <button
+                onClick={() => navigate("/test", {
+                  state: { courseId, examType, paperId: speakingPaper.id,
+                           sectionName: courseData?.courseName } })}
+                style={{
+                  width:"100%", display:"flex", alignItems:"center", gap:9,
+                  padding:"10px 12px", borderRadius:12,
+                  border:"1.5px solid #E2EBF0",
+                  background:"transparent", cursor:"pointer",
+                  fontFamily:SERIF, fontSize:13, fontWeight:700, color:"#64748B",
+                  transition:"transform 0.15s, border-color 0.15s, color 0.15s",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.borderColor = "#94A3B8";
+                  e.currentTarget.style.color = "#374151";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = "none";
+                  e.currentTarget.style.borderColor = "#E2EBF0";
+                  e.currentTarget.style.color = "#64748B";
+                }}
+              >
+                <NotePencil size={16} weight="bold" />
+                Speaking Practice · {speakingPaper.timeLimitMinutes} min
+              </button>
+            )}
+
+            {/* Multi-essay (A-Level / TOEFL independent writing) */}
+            {multiEssayPaper && (
+              <button
+                onClick={() => navigate("/test", {
+                  state: { courseId, examType, paperId: multiEssayPaper.id,
+                           sectionName: courseData?.courseName } })}
+                style={{
+                  width:"100%", display:"flex", alignItems:"center", gap:9,
+                  padding:"10px 12px", borderRadius:12,
+                  border:"1.5px solid #E2EBF0",
+                  background:"transparent", cursor:"pointer",
+                  fontFamily:SERIF, fontSize:13, fontWeight:700, color:"#64748B",
+                  transition:"transform 0.15s, border-color 0.15s, color 0.15s",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.borderColor = "#94A3B8";
+                  e.currentTarget.style.color = "#374151";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = "none";
+                  e.currentTarget.style.borderColor = "#E2EBF0";
+                  e.currentTarget.style.color = "#64748B";
+                }}
+              >
+                <NotePencil size={16} weight="bold" />
+                Multi-essay · {multiEssayPaper.timeLimitMinutes} min
               </button>
             )}
           </div>

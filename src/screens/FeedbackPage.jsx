@@ -21,7 +21,7 @@ const POLL_TIMEOUT_MS  = 120_000; // 2 minutes
 
 const hasPending = (report) =>
   report?.questionsFeedback?.some(
-    q => q.aiScore == null || q.aiScore < 0 ||
+    q => q.aiScore == null ||
          q.aiFeedback === "AI evaluation in progress..."
   ) ?? false;
 
