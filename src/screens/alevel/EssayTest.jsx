@@ -1,4 +1,4 @@
-/**
+﻿/**
  * EssayTest.jsx — Paper 3 (ESSAY) test screen.
  *
  * One essay at a time, linear flow.
@@ -10,11 +10,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate }        from "react-router-dom";
 import { ArrowRight, PaperPlaneTilt } from "@phosphor-icons/react";
-import { TestsApi }           from "../api/index.js";
-import LoadingScreen          from "../components/common/LoadingScreen.jsx";
-import TestTopBar             from "../components/test/TestTopBar.jsx";
-import AnswerTextarea         from "../components/test/AnswerTextarea.jsx";
-import useAutosave            from "../hooks/useAutosave.js";
+import { TestsApi }           from "../../api/index.js";
+import LoadingScreen          from "../../components/common/LoadingScreen.jsx";
+import TestTopBar             from "../../components/test/TestTopBar.jsx";
+import AnswerTextarea         from "../../components/test/AnswerTextarea.jsx";
+import useAutosave            from "../../hooks/useAutosave.js";
 
 const DARK  = "#062f37";
 const BRAND = "#0a5f6e";

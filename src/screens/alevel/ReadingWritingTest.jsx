@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ReadingWritingTest.jsx — Generic "Reading + Writing" test screen.
  *
  * Used for:
@@ -26,11 +26,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate }       from "react-router-dom";
 import { PaperPlaneTilt }    from "@phosphor-icons/react";
-import { TestsApi }          from "../api/index.js";
-import LoadingScreen         from "../components/common/LoadingScreen.jsx";
-import TestTopBar            from "../components/test/TestTopBar.jsx";
-import AnswerTextarea        from "../components/test/AnswerTextarea.jsx";
-import useAutosave           from "../hooks/useAutosave.js";
+import { TestsApi }          from "../../api/index.js";
+import LoadingScreen         from "../../components/common/LoadingScreen.jsx";
+import TestTopBar            from "../../components/test/TestTopBar.jsx";
+import AnswerTextarea        from "../../components/test/AnswerTextarea.jsx";
+import useAutosave           from "../../hooks/useAutosave.js";
 
 const DARK  = "#062f37";
 const BRAND = "#0a5f6e";

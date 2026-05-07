@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SpeakingTest.jsx — TOEFL Speaking section.
  *
  * Two task types, auto-detected from question text prefix:
@@ -19,9 +19,9 @@ import {
   CaretLeft, CaretRight, PaperPlane,
   SpeakerHigh, Microphone, Stop, CheckCircle, WarningCircle,
 } from "@phosphor-icons/react";
-import { TestsApi }  from "../api/index.js";
-import LoadingScreen from "../components/common/LoadingScreen.jsx";
-import TestTopBar    from "../components/test/TestTopBar.jsx";
+import { TestsApi }  from "../../api/index.js";
+import LoadingScreen from "../../components/common/LoadingScreen.jsx";
+import TestTopBar    from "../../components/test/TestTopBar.jsx";
 
 const DARK  = "#062f37";
 const BRAND = "#0a5f6e";

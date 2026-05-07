@@ -43,8 +43,11 @@ export const AuthApi = {
 export const CoursesApi = {
   /** Returns List<ExamDTO> */
   getExams:          ()                   => client.get("/exams/dashboard"),
-  /** Returns List<CourseDTO> — each course includes papers[] */
-  getCoursesByExam:  (examId)             => client.get(`/exams/${examId}`),
+  /** Returns List<CourseDTO> — each course includes papers[]. section: "AS" | "A2" | null */
+  getCoursesByExam:  (examId, section = null) => {
+    const qs = section ? `?section=${section}` : "";
+    return client.get(`/exams/${examId}${qs}`);
+  },
   /** Returns CourseUnitsResponse { courseName, courseIcon, units: UnitDTO[] } */
   getUnits:          (courseId)           => client.get(`/units/course/${courseId}`),
   /** Returns a URL string (used to open PDF in new tab) */
@@ -101,6 +104,13 @@ export const TestsApi = {
    */
   getReport: (testId) =>
     client.get(`/tests/${testId}/report`),
+
+  /**
+   * Returns DailyStatusDTO { usedToday, limit, isPremium }.
+   * Call on TestPage mount to enforce free-tier daily cap.
+   */
+  getDailyStatus: () =>
+    client.get("/tests/daily-status"),
 };
 
 // ── Feedback (legacy polling — kept until report page is fully migrated) ──────
@@ -108,6 +118,19 @@ export const TestsApi = {
 export const FeedbackApi = {
   /** Poll until openEndedPending = false */
   poll: (testId) => client.get(`/feedback/${testId}`),
+};
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+
+export const AdminApi = {
+  /** POST /admin/questions — AddQuestionDTO payload */
+  addQuestion: (payload) => client.post("/admin/questions", payload),
+  /** DELETE /admin/questions/{id} */
+  deleteQuestion: (id) => client.delete(`/admin/questions/${id}`),
+  /** Returns List<ExamDTO> for the exam-type selector */
+  getExams: () => client.get("/admin/exams"),
+  /** Returns List<CourseDTO> for the subject selector */
+  getCourses: (examId) => client.get(`/admin/exams/${examId}/courses`),
 };
 
 // ── Progress / Analytics ──────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Home.jsx — Landing page
  * Desktop-first premium design. Responsive as a safety net.
  */
@@ -6,7 +6,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, CheckCircle, BookOpen, Brain, Trophy, ChartBar, Lightning, Exam } from "@phosphor-icons/react";
-import peacockIcon from "../assets/iconoEdusupernovaSinFondo.png";
+import peacockIcon from "../../assets/iconoEdusupernovaSinFondo.png";
 
 const SERIF  = "Newsreader, Georgia, serif";
 const SCRIPT = "Cookie, cursive";

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * FeedbackPage.jsx — Results / report screen
  *
  * Fetches GET /tests/{testId}/report → FeedBackDTO, then renders
@@ -8,13 +8,13 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Trophy, ArrowClockwise } from "@phosphor-icons/react";
-import AppHeader     from "../components/common/appHeader.jsx";
-import AppFooter     from "../components/common/appFooter.jsx";
-import QuestionCard  from "../components/feedback/QuestionCard.jsx";
-import ErrorScreen   from "../components/common/ErrorScreen.jsx";
-import LoadingScreen from "../components/common/LoadingScreen.jsx";
-import useInView     from "../hooks/useInView.js";
-import { TestsApi }  from "../api/index.js";
+import AppHeader     from "../../components/common/appHeader.jsx";
+import AppFooter     from "../../components/common/appFooter.jsx";
+import QuestionCard  from "../../components/feedback/QuestionCard.jsx";
+import ErrorScreen   from "../../components/common/ErrorScreen.jsx";
+import LoadingScreen from "../../components/common/LoadingScreen.jsx";
+import useInView     from "../../hooks/useInView.js";
+import { TestsApi }  from "../../api/index.js";
 
 const POLL_INTERVAL_MS = 3_000;
 const POLL_TIMEOUT_MS  = 120_000; // 2 minutes

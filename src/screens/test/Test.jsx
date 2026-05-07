@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Test.jsx — dispatcher + Paper 1 MCQ screen.
  *
  * On mount: calls POST /tests/start and reads session.paperFormat.
@@ -15,19 +15,29 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { WarningCircle, House, BookOpen, User, SignOut } from "@phosphor-icons/react";
-import { TestsApi }          from "../api/index.js";
-import ProgressHeader        from "../components/test/ProgressHeader.jsx";
-import LoadingScreen         from "../components/common/LoadingScreen.jsx";
-import SaveIndicator         from "../components/test/SaveIndicator.jsx";
-import DataResponseTest      from "./DataResponseTest.jsx";
-import EssayTest             from "./EssayTest.jsx";
-import ReadingWritingTest    from "./ReadingWritingTest.jsx";
-import MultiEssayTest        from "./MultiEssayTest.jsx";
-import ReadingTest           from "./ReadingTest.jsx";
-import ListeningTest         from "./ListeningTest.jsx";
-import WritingTest           from "./WritingTest.jsx";
-import SpeakingTest          from "./SpeakingTest.jsx";
-import useAutosave           from "../hooks/useAutosave.js";
+import { TestsApi }          from "../../api/index.js";
+import ProgressHeader        from "../../components/test/ProgressHeader.jsx";
+import LoadingScreen         from "../../components/common/LoadingScreen.jsx";
+import SaveIndicator         from "../../components/test/SaveIndicator.jsx";
+import DataResponseTest      from "../alevel/DataResponseTest.jsx";
+import EssayTest             from "../alevel/EssayTest.jsx";
+import ReadingWritingTest    from "../alevel/ReadingWritingTest.jsx";
+import MultiEssayTest        from "../alevel/MultiEssayTest.jsx";
+import ReadingTest           from "../toefl/ReadingTest.jsx";
+import ListeningTest         from "../toefl/ListeningTest.jsx";
+import WritingTest           from "../toefl/WritingTest.jsx";
+import SpeakingTest          from "../toefl/SpeakingTest.jsx";
+import ACTEnglishTest        from "../act/ACTEnglishTest.jsx";
+import ACTReadingTest        from "../act/ACTReadingTest.jsx";
+import ACTScienceTest        from "../act/ACTScienceTest.jsx";
+import ACTMathTest           from "../act/ACTMathTest.jsx";
+import SATReadingTest        from "../sat/SATReadingTest.jsx";
+import SATMathTest           from "../sat/SATMathTest.jsx";
+import IELTSListeningTest    from "../ielts/IELTSListeningTest.jsx";
+import IELTSReadingTest      from "../ielts/IELTSReadingTest.jsx";
+import IELTSWritingTest      from "../ielts/IELTSWritingTest.jsx";
+import IELTSSpeakingTest     from "../ielts/IELTSSpeakingTest.jsx";
+import useAutosave           from "../../hooks/useAutosave.js";
 
 const DARK  = "#062f37";
 const BRAND = "#0a5f6e";
@@ -110,7 +120,7 @@ const Spinner = ({ small, dark }) => (
 const TestScreen = () => {
   const navigate  = useNavigate();
   const location  = useLocation();
-  const { courseId, paperId = null, unitId = null } = location.state || {};
+  const { courseId, paperId = null, unitId = null, examType = null } = location.state || {};
 
   const [session,     setSession]     = useState(null);
   const [question,    setQuestion]    = useState(null);
@@ -181,7 +191,44 @@ const TestScreen = () => {
 
   // ── Format-based dispatch ─────────────────────────────────────────────────
   if (session) {
-    const fmt = session.paperFormat?.toUpperCase();
+    const fmt  = session.paperFormat?.toUpperCase();
+    const exam = (examType ?? session.examType ?? "").toUpperCase().replace(/[\s_-]/g, "");
+
+    // Future-proof: if backend ever adds ACT/SAT-specific format values
+    if (fmt === "ACT_ENGLISH")     return <ACTEnglishTest    session={session} />;
+    if (fmt === "ACT_READING")     return <ACTReadingTest    session={session} />;
+    if (fmt === "ACT_SCIENCE")     return <ACTScienceTest    session={session} />;
+    if (fmt === "ACT_MATH")        return <ACTMathTest       session={session} />;
+    if (fmt === "SAT_READING")       return <SATReadingTest      session={session} />;
+    if (fmt === "SAT_MATH")          return <SATMathTest         session={session} />;
+    if (fmt === "IELTS_LISTENING")   return <IELTSListeningTest  session={session} />;
+    if (fmt === "IELTS_READING")     return <IELTSReadingTest    session={session} />;
+    if (fmt === "IELTS_WRITING")     return <IELTSWritingTest    session={session} />;
+    if (fmt === "IELTS_SPEAKING")    return <IELTSSpeakingTest   session={session} />;
+
+    // Backend currently stores ACT/SAT as generic formats (MCQ, MULTI_ESSAY, READING, NUMERIC_INPUT).
+    // Dispatch by exam type + course name to reach the right UI.
+    if (exam.includes("ACT")) {
+      const course = session.courseName?.toUpperCase() ?? "";
+      if (fmt === "MULTI_ESSAY")                    return <ACTEnglishTest  session={session} />;
+      if (course.includes("SCIENCE"))               return <ACTScienceTest  session={session} />;
+      if (course.includes("MATH"))                  return <ACTMathTest     session={session} />;
+      if (course.includes("READING") || fmt === "READING") return <ACTReadingTest session={session} />;
+      return <ACTEnglishTest session={session} />;
+    }
+    if (exam.includes("SAT")) {
+      const course = session.courseName?.toUpperCase() ?? "";
+      if (course.includes("MATH") || fmt === "NUMERIC_INPUT") return <SATMathTest    session={session} />;
+      return <SATReadingTest session={session} />;
+    }
+    if (exam.includes("IELTS")) {
+      const course = session.courseName?.toUpperCase() ?? "";
+      if (course.includes("LISTEN") || fmt === "IELTS_LISTENING") return <IELTSListeningTest session={session} />;
+      if (course.includes("SPEAK")  || fmt === "IELTS_SPEAKING")  return <IELTSSpeakingTest  session={session} />;
+      if (course.includes("WRIT")   || fmt === "IELTS_WRITING")   return <IELTSWritingTest    session={session} />;
+      return <IELTSReadingTest session={session} />;
+    }
+
     if (fmt === "DATA_RESPONSE")   return <DataResponseTest   session={session} />;
     if (fmt === "READING_WRITING" && session.courseName === "Writing")
                                    return <WritingTest        session={session} />;

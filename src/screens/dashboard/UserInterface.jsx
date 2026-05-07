@@ -1,4 +1,4 @@
-/**
+﻿/**
  * UserInterface.jsx — Course Dashboard
  * Premium desktop design: dark hero strip, warm cream body, elevated course cards.
  */
@@ -6,13 +6,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Books } from "@phosphor-icons/react";
-import { CoursesApi } from "../api/index.js";
-import useAuth    from "../hooks/useAuth.js";
-import AppHeader  from "../components/common/appHeader.jsx";
-import AppFooter  from "../components/common/appFooter.jsx";
-import ExamCard   from "../components/userInterface/ExamCard.jsx";
-import CourseCard from "../components/userInterface/CourseCard.jsx";
-import useInView  from "../hooks/useInView.js";
+import { CoursesApi } from "../../api/index.js";
+import useAuth               from "../../hooks/useAuth.js";
+import AppHeader             from "../../components/common/appHeader.jsx";
+import AppFooter             from "../../components/common/appFooter.jsx";
+import ExamCard              from "../../components/userInterface/ExamCard.jsx";
+import CourseCard            from "../../components/userInterface/CourseCard.jsx";
+import ALevelSectionToggle   from "../../components/ALevelSectionToggle.jsx";
+import useInView             from "../../hooks/useInView.js";
+
+const isALevels = (exam) =>
+  exam?.examname?.toUpperCase().replace(/[\s_-]/g, "").includes("ALEVEL");
 
 const DARK  = "#062f37";
 const BRAND = "#0a5f6e";
@@ -71,6 +75,7 @@ const UserInterface = () => {
   const [loading,        setLoading]        = useState(true);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [networkError,   setNetworkError]   = useState(false);
+  const [aLevelSection,  setALevelSection]  = useState("AS");
 
   // ── Enrollment state ──────────────────────────────────────────────────────
   const [isEnrolled,    setIsEnrolled]    = useState(false);
@@ -96,17 +101,13 @@ const UserInterface = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleSelectExam = async (exam) => {
-    if (!exam?.id || selectedExam?.id === exam.id) return;
-    setSelectedExam(exam);
+  const fetchCourses = async (exam, section = null) => {
     setCourses([]);
-    setEnrollChecked(false);
-    setEnrollError(null);
     setLoadingCourses(true);
-
     try {
+      const sectionParam = isALevels(exam) ? section : null;
       const [coursesRes, statusRes] = await Promise.allSettled([
-        CoursesApi.getCoursesByExam(exam.id),
+        CoursesApi.getCoursesByExam(exam.id, sectionParam),
         userId ? CoursesApi.checkEnrollment(exam.id, userId) : Promise.resolve({ data: false }),
       ]);
 
@@ -128,6 +129,19 @@ const UserInterface = () => {
       setLoadingCourses(false);
       setEnrollChecked(true);
     }
+  };
+
+  const handleSectionChange = (newSection) => {
+    setALevelSection(newSection);
+    if (selectedExam) fetchCourses(selectedExam, newSection);
+  };
+
+  const handleSelectExam = (exam) => {
+    if (!exam?.id || selectedExam?.id === exam.id) return;
+    setSelectedExam(exam);
+    setEnrollChecked(false);
+    setEnrollError(null);
+    fetchCourses(exam, isALevels(exam) ? aLevelSection : null);
   };
 
   const handleEnroll = async () => {
@@ -362,10 +376,18 @@ const UserInterface = () => {
                   color:BRAND, marginBottom:4 }}>
                   Subjects available
                 </p>
-                <h2 style={{ fontFamily:SERIF, fontSize:28, fontWeight:700,
-                  color:"#0F172A", letterSpacing:"-0.8px" }}>
-                  {selectedExam.examname}
-                </h2>
+                <div style={{ display:"flex", alignItems:"center", gap:20, flexWrap:"wrap" }}>
+                  <h2 style={{ fontFamily:SERIF, fontSize:28, fontWeight:700,
+                    color:"#0F172A", letterSpacing:"-0.8px", margin:0 }}>
+                    {selectedExam.examname}
+                  </h2>
+                  {isALevels(selectedExam) && (
+                    <ALevelSectionToggle
+                      section={aLevelSection}
+                      onChange={handleSectionChange}
+                    />
+                  )}
+                </div>
               </div>
               {courses.length > 0 && (
                 <span style={{ fontFamily:SERIF, fontSize:13, color:"#94A3B8" }}>

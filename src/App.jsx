@@ -21,19 +21,19 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import useAuth from "./hooks/useAuth.js";
 
 // ── Public screens ────────────────────────────────────────────────────────────
-import Home      from "./screens/Home.jsx";
-import LogIn     from "./screens/LogIn.jsx";
-import Register  from "./screens/Register.jsx";
+import Home      from "./screens/auth/Home.jsx";
+import LogIn     from "./screens/auth/LogIn.jsx";
+import Register  from "./screens/auth/Register.jsx";
 
 // ── Student screens ───────────────────────────────────────────────────────────
-import UserInterface from "./screens/UserInterface.jsx";
-import Units         from "./screens/Units.jsx";
-import Test          from "./screens/Test.jsx";
-import FeedbackPage  from "./screens/FeedbackPage.jsx";
-import Profile       from "./screens/Profile.jsx";
+import UserInterface from "./screens/dashboard/UserInterface.jsx";
+import Units         from "./screens/dashboard/Units.jsx";
+import Test          from "./screens/test/Test.jsx";
+import FeedbackPage  from "./screens/dashboard/FeedbackPage.jsx";
+import Profile       from "./screens/dashboard/Profile.jsx";
 
 // ── Admin screens ─────────────────────────────────────────────────────────────
-import AdminInterface from "./screens/AdminInterface.jsx";
+import AdminInterface from "./screens/admin/AdminInterface.jsx";
 
 // ─── Auth guard ───────────────────────────────────────────────────────────────
 

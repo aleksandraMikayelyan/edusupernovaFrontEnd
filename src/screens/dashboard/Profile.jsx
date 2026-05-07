@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Profile.jsx — Student Profile & Analytics Dashboard
  *
  * Shows:
@@ -18,10 +18,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate }  from "react-router-dom";
 import { BookOpen, ChartBar, Trophy, ArrowLeft } from "@phosphor-icons/react";
-import { ProgressApi }  from "../api/index.js";
-import useAuth          from "../hooks/useAuth.js";
-import AppHeader        from "../components/common/appHeader.jsx";
-import AppFooter        from "../components/common/appFooter.jsx";
+import { ProgressApi }  from "../../api/index.js";
+import useAuth          from "../../hooks/useAuth.js";
+import AppHeader        from "../../components/common/appHeader.jsx";
+import AppFooter        from "../../components/common/appFooter.jsx";
 
 const DARK  = "#062f37";
 const BRAND = "#0a5f6e";

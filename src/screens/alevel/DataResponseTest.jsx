@@ -1,4 +1,4 @@
-/**
+﻿/**
  * DataResponseTest.jsx — Paper 2 (DATA_RESPONSE) test screen.
  *
  * Layout:
@@ -18,12 +18,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate }        from "react-router-dom";
 import { CaretLeft, CaretRight, PaperPlane } from "@phosphor-icons/react";
-import { TestsApi }           from "../api/index.js";
-import LoadingScreen          from "../components/common/LoadingScreen.jsx";
-import TestTopBar             from "../components/test/TestTopBar.jsx";
-import ContextPanel           from "../components/test/ContextPanel.jsx";
-import AnswerTextarea         from "../components/test/AnswerTextarea.jsx";
-import useAutosave            from "../hooks/useAutosave.js";
+import { TestsApi }           from "../../api/index.js";
+import LoadingScreen          from "../../components/common/LoadingScreen.jsx";
+import TestTopBar             from "../../components/test/TestTopBar.jsx";
+import ContextPanel           from "../../components/test/ContextPanel.jsx";
+import AnswerTextarea         from "../../components/test/AnswerTextarea.jsx";
+import useAutosave            from "../../hooks/useAutosave.js";
 
 const DARK  = "#062f37";
 const BRAND = "#0a5f6e";

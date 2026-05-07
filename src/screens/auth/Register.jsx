@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Register.jsx — Registration screen
  * Form left, dark brand panel right (mirrored from Login).
  */
@@ -7,9 +7,9 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { ArrowRight } from "@phosphor-icons/react";
 import { GoogleLogin } from "@react-oauth/google";
-import { AuthApi } from "../api/index.js";
-import useAuth from "../hooks/useAuth.js";
-import logoIcon from "../assets/iconoEdusupernovaSinFondo.png";
+import { AuthApi } from "../../api/index.js";
+import useAuth from "../../hooks/useAuth.js";
+import logoIcon from "../../assets/iconoEdusupernovaSinFondo.png";
 
 const DARK   = "#062f37";
 const BRAND  = "#0a5f6e";

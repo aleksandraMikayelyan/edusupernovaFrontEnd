@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Units.jsx — Unit reading screen
  * Premium editorial layout: fixed sidebar + distraction-free article canvas.
  */
@@ -6,12 +6,12 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FilePdf, CheckCircle, CaretRight, NotePencil, ListBullets } from "@phosphor-icons/react";
-import { CoursesApi } from "../api/index.js";
-import AppFooter          from "../components/common/appFooter.jsx";
-import LoadingScreen      from "../components/common/LoadingScreen.jsx";
-import ArticleBody        from "../components/units/ArticleBody.jsx";
-import CollapsibleSection from "../components/units/CollapsibleSection.jsx";
-import UnitTab            from "../components/units/UnitTab.jsx";
+import { CoursesApi } from "../../api/index.js";
+import AppFooter          from "../../components/common/appFooter.jsx";
+import LoadingScreen      from "../../components/common/LoadingScreen.jsx";
+import ArticleBody        from "../../components/units/ArticleBody.jsx";
+import CollapsibleSection from "../../components/units/CollapsibleSection.jsx";
+import UnitTab            from "../../components/units/UnitTab.jsx";
 
 const DARK  = "#062f37";
 const BRAND = "#0a5f6e";
@@ -21,7 +21,7 @@ const SCRIPT= "Cookie, cursive";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const PDF_KEYWORDS = ["act science","act math","a level","a-level","economy","economics","math"];
+const PDF_KEYWORDS = ["act science","act math","a level","a-level","economy","economics","math","physics","chemistry","biology","statistics"];
 const hasPdfSheet  = (name = "") => PDF_KEYWORDS.some(kw => name.toLowerCase().includes(kw));
 
 const calcReadingTime = (text) => {
@@ -130,7 +130,33 @@ const UnitScreen = () => {
 
         {/* Article body */}
         <div style={{ padding:"52px 80px 0" }}>
-          <ArticleBody text={summaryText} />
+          {summaryText?.trim() ? (
+            <ArticleBody text={summaryText} />
+          ) : (
+            <div style={{
+              display:"flex", flexDirection:"column", alignItems:"center",
+              justifyContent:"center", gap:16, padding:"80px 0",
+              border:"2px dashed #E2EBF0", borderRadius:20,
+            }}>
+              <div style={{
+                width:56, height:56, borderRadius:18,
+                background:"#e8f7f9",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:26,
+              }}>
+                📖
+              </div>
+              <div style={{ textAlign:"center" }}>
+                <p style={{ fontFamily:SERIF, fontSize:17, fontWeight:700,
+                  color:"#0F172A", margin:"0 0 6px" }}>
+                  Summary coming soon
+                </p>
+                <p style={{ fontFamily:SERIF, fontSize:13, color:"#94A3B8" }}>
+                  Study notes for this unit are being prepared.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Unit navigation — bottom of article */}
@@ -209,25 +235,28 @@ const UnitScreen = () => {
           </div>
 
           <div style={{ flex:1, padding:"12px 12px 16px" }}>
-            {showPdf && (
-              <button
-                onClick={() => window.open(CoursesApi.getFormulaSheet(courseId), "_blank")}
-                style={{
-                  width:"100%", display:"flex", alignItems:"center", gap:10,
-                  background:"#f0fdf4", border:"1px solid #86efac",
-                  borderRadius:12, padding:"11px 14px", marginBottom:16,
-                  cursor:"pointer", transition:"background 0.15s",
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = "#dcfce7"}
-                onMouseLeave={e => e.currentTarget.style.background = "#f0fdf4"}
-              >
-                <FilePdf size={18} weight="duotone" color="#15803d" />
-                <span style={{ fontFamily:SERIF, fontSize:13, fontWeight:700,
-                  color:"#15803d", flex:1, textAlign:"left" }}>
-                  Formula Sheet PDF
-                </span>
-              </button>
-            )}
+            <button
+              disabled={!showPdf}
+              onClick={() => showPdf && window.open(CoursesApi.getFormulaSheet(courseId), "_blank")}
+              style={{
+                width:"100%", display:"flex", alignItems:"center", gap:10,
+                background: showPdf ? "#f0fdf4" : "#F8FAFC",
+                border: `1px solid ${showPdf ? "#86efac" : "#E2EBF0"}`,
+                borderRadius:12, padding:"11px 14px", marginBottom:16,
+                cursor: showPdf ? "pointer" : "not-allowed",
+                transition:"background 0.15s",
+                opacity: showPdf ? 1 : 0.5,
+              }}
+              onMouseEnter={e => { if (showPdf) e.currentTarget.style.background = "#dcfce7"; }}
+              onMouseLeave={e => { if (showPdf) e.currentTarget.style.background = "#f0fdf4"; }}
+            >
+              <FilePdf size={18} weight="duotone" color={showPdf ? "#15803d" : "#94A3B8"} />
+              <span style={{ fontFamily:SERIF, fontSize:13, fontWeight:700,
+                color: showPdf ? "#15803d" : "#94A3B8",
+                flex:1, textAlign:"left" }}>
+                {showPdf ? "Formula Sheet PDF" : "No formula sheet"}
+              </span>
+            </button>
 
             <CollapsibleSection title="UNITS" defaultOpen>
               {courseData?.units?.map((u, idx) => (
