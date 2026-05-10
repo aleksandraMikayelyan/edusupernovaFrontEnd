@@ -132,7 +132,7 @@ const AudioCard = ({ audioState, playCount, onPlay, onStop, hasContext, groupTit
           <button onClick={onPlay} disabled={!canPlay}
             style={{
               display: "flex", alignItems: "center", gap: 8,
-              padding: "10px 22px", borderRadius: 11, border: "none",
+              padding: "10px 22px", borderRadius: 11,
               background: !canPlay ? "#E8EDF2"
                 : playCount === 0 ? MINT : "#e8f7f9",
               color: !canPlay ? "#94A3B8"

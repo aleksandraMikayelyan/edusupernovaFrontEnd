@@ -93,7 +93,7 @@ const NavBtn = ({ onClick, disabled, variant = "primary", children }) => (
   <button onClick={onClick} disabled={disabled}
     style={{
       display: "flex", alignItems: "center", gap: 10,
-      padding: "14px 40px", borderRadius: 14, border: "none",
+      padding: "14px 40px", borderRadius: 14,
       fontFamily: SERIF, fontSize: 15, fontWeight: 700,
       cursor: disabled ? "not-allowed" : "pointer",
       background: disabled ? "#E8EDF2" : variant === "primary" ? MINT : "transparent",
