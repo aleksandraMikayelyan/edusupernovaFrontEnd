@@ -4,7 +4,7 @@
  */
 
 import { useNavigate, useLocation } from "react-router-dom";
-import { House, Books, User }       from "@phosphor-icons/react";
+import { House, Books, User, ClockCounterClockwise } from "@phosphor-icons/react";
 import { MAIN_TABS } from "../../constants/navTab.js";
 
 const SERIF  = "Newsreader, Georgia, serif";
@@ -13,8 +13,9 @@ const BRAND  = "#0a5f6e";
 const DARK   = "#062f37";
 
 const ICON_MAP = {
-  "home-outline": House,
-  "book-outline": Books,
+  "home-outline":    House,
+  "book-outline":    Books,
+  "history-outline": ClockCounterClockwise,
 };
 
 const NavTab = ({ icon, label, path }) => {

@@ -226,7 +226,7 @@ const SATMathTest = ({ session }) => {
   const saveAndAdvance = async () => {
     if (answers[qIndex] && current) {
       try {
-        await TestsApi.submitAnswer(testId, current.quizId, answers[qIndex]);
+        await TestsApi.submitAnswer(current.testId ?? testId, current.quizId, answers[qIndex]);
       } catch (err) {
         setSubmitError(err.message ?? "Could not save answer.");
         return false;
@@ -257,10 +257,10 @@ const SATMathTest = ({ session }) => {
       // Flush any remaining unsaved answers
       await Promise.allSettled(
         questions.map((q, i) =>
-          answers[i] ? TestsApi.submitAnswer(testId, q.quizId, answers[i]) : null
+          answers[i] ? TestsApi.submitAnswer(q.testId ?? testId, q.quizId, answers[i]) : null
         ).filter(Boolean)
       );
-      navigate("/feedback", { state: { testId }, replace: true });
+      navigate("/feedback", { state: { testId: questions[0]?.testId ?? testId }, replace: true });
     } catch { setSubmitting(false); }
   };
 

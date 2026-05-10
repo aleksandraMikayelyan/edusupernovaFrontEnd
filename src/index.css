@@ -18,6 +18,47 @@
     box-sizing: border-box;
   }
 
+  /* ── Custom scrollbars ─────────────────────────────────────────── */
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #5DCAA5 #E8EDF4;
+  }
+
+  /* Chrome / Edge / Safari — track */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 999px;
+  }
+
+  /* Thumb — resting state */
+  ::-webkit-scrollbar-thumb {
+    background: #b2dfd2;
+    border-radius: 999px;
+    transition: background 0.2s;
+  }
+
+  /* Thumb — hover */
+  ::-webkit-scrollbar-thumb:hover {
+    background: #5DCAA5;
+  }
+
+  /* Thumb — active (dragging) */
+  ::-webkit-scrollbar-thumb:active {
+    background: #0a5f6e;
+  }
+
+  /* Corner where horizontal + vertical scrollbars meet */
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
   /* Remove default button styling so all our Tailwind buttons work cleanly */
   button {
     background: none;

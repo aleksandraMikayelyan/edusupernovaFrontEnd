@@ -111,6 +111,14 @@ export const TestsApi = {
    */
   getDailyStatus: () =>
     client.get("/tests/daily-status"),
+
+  /**
+   * Returns List<TestHistoryDTO> — all COMPLETED tests for the current user, newest first.
+   * Fields: testId, courseId, courseName, paperId, paperName, paperFormat,
+   *         finalScore, grade, totalCorrect, totalQuestions, completedAt, durationSeconds
+   */
+  getHistory: () =>
+    client.get("/tests/history"),
 };
 
 // ── Feedback (legacy polling — kept until report page is fully migrated) ──────
@@ -123,14 +131,26 @@ export const FeedbackApi = {
 // ── Admin ─────────────────────────────────────────────────────────────────────
 
 export const AdminApi = {
-  /** POST /admin/questions — AddQuestionDTO payload */
-  addQuestion: (payload) => client.post("/admin/questions", payload),
+  /** Returns List<ExamDTO> */
+  getExams:       ()          => client.get("/admin/exams"),
+  /** Returns List<{ id, coursename, papers: [{id, paperName, format}] }> */
+  getCourses:     (examId)    => client.get(`/admin/exams/${examId}/courses`),
+  /** Returns List<{ id, title, orderIndex }> — existing groups for a paper */
+  getGroups:      (paperId)   => client.get(`/admin/papers/${paperId}/groups`),
+  /** POST /admin/groups — { paperId, title, contextText, contextImageUrl?, orderIndex } */
+  createGroup:    (payload)   => client.post("/admin/groups", payload),
+  /** POST /admin/questions — AddQuestionRequest payload */
+  addQuestion:    (payload)   => client.post("/admin/questions", payload),
   /** DELETE /admin/questions/{id} */
-  deleteQuestion: (id) => client.delete(`/admin/questions/${id}`),
-  /** Returns List<ExamDTO> for the exam-type selector */
-  getExams: () => client.get("/admin/exams"),
-  /** Returns List<CourseDTO> for the subject selector */
-  getCourses: (examId) => client.get(`/admin/exams/${examId}/courses`),
+  deleteQuestion: (id)        => client.delete(`/admin/questions/${id}`),
+  /** POST /admin/courses/{courseId}/formula-sheet — multipart PDF upload */
+  uploadFormulaSheet: (courseId, file) => {
+    const form = new FormData();
+    form.append("file", file);
+    return client.post(`/admin/courses/${courseId}/formula-sheet`, form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
 };
 
 // ── Progress / Analytics ──────────────────────────────────────────────────────

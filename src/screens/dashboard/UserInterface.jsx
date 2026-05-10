@@ -83,6 +83,30 @@ const UserInterface = () => {
   const [enrolling,     setEnrolling]     = useState(false);
   const [enrollError,   setEnrollError]   = useState(null);
 
+  // ── A-Level per-course subject selection (localStorage-backed) ────────────
+  const [myALevelCourses,    setMyALevelCourses]    = useState(new Set());
+  const [showMySubjectsOnly, setShowMySubjectsOnly] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    try {
+      const saved = localStorage.getItem(`alevel_courses_${userId}`);
+      if (saved) setMyALevelCourses(new Set(JSON.parse(saved)));
+    } catch {}
+  }, [userId]);
+
+  const toggleALevelCourse = (e, courseId) => {
+    e.stopPropagation();
+    if (!userId) return;
+    setMyALevelCourses(prev => {
+      const next = new Set(prev);
+      if (next.has(courseId)) next.delete(courseId);
+      else next.add(courseId);
+      localStorage.setItem(`alevel_courses_${userId}`, JSON.stringify([...next]));
+      return next;
+    });
+  };
+
   useEffect(() => {
     CoursesApi.getExams()
       .then(res => {
@@ -141,6 +165,7 @@ const UserInterface = () => {
     setSelectedExam(exam);
     setEnrollChecked(false);
     setEnrollError(null);
+    if (!isALevels(exam)) setShowMySubjectsOnly(false);
     fetchCourses(exam, isALevels(exam) ? aLevelSection : null);
   };
 
@@ -399,19 +424,132 @@ const UserInterface = () => {
             {loadingCourses ? (
               <CardSkeleton />
             ) : courses.length > 0 ? (
-              <div style={{ display:"grid",
-                gridTemplateColumns:"repeat(auto-fill, minmax(200px, 1fr))",
-                gap:16 }}>
-                {courses.map((course, i) => (
-                  <div key={course.id} style={{
-                    animation:`fadeUp 0.5s ease both ${i * 55}ms`,
-                    opacity:1,
+              <>
+                {/* ── A-Level subject filter bar ── */}
+                {isALevels(selectedExam) && (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    marginBottom: 20, flexWrap: "wrap",
                   }}>
-                    <CourseCard course={course}
-                      onPress={() => handleSelectCourse(course)} />
+                    {myALevelCourses.size > 0 ? (
+                      <>
+                        <button
+                          onClick={() => setShowMySubjectsOnly(false)}
+                          style={{
+                            fontFamily: SERIF, fontSize: 12, fontWeight: 700,
+                            padding: "6px 16px", borderRadius: 99, cursor: "pointer",
+                            border: `1.5px solid ${!showMySubjectsOnly ? BRAND : "#E2EBF0"}`,
+                            background: !showMySubjectsOnly ? "#e8f7f9" : "#fff",
+                            color: !showMySubjectsOnly ? BRAND : "#94A3B8",
+                            transition: "all 0.18s",
+                          }}
+                        >
+                          All subjects ({courses.length})
+                        </button>
+                        <button
+                          onClick={() => setShowMySubjectsOnly(true)}
+                          style={{
+                            fontFamily: SERIF, fontSize: 12, fontWeight: 700,
+                            padding: "6px 16px", borderRadius: 99, cursor: "pointer",
+                            border: `1.5px solid ${showMySubjectsOnly ? BRAND : "#E2EBF0"}`,
+                            background: showMySubjectsOnly ? "#e8f7f9" : "#fff",
+                            color: showMySubjectsOnly ? BRAND : "#94A3B8",
+                            transition: "all 0.18s",
+                          }}
+                        >
+                          My subjects ({myALevelCourses.size})
+                        </button>
+                      </>
+                    ) : (
+                      <p style={{ fontFamily: SERIF, fontSize: 13,
+                        color: "#94A3B8", margin: 0, fontStyle: "italic" }}>
+                        Click + on a subject to add it to your personal list
+                      </p>
+                    )}
                   </div>
-                ))}
-              </div>
+                )}
+
+                {/* ── Course cards grid ── */}
+                {(() => {
+                  const displayed = isALevels(selectedExam) && showMySubjectsOnly
+                    ? courses.filter(c => myALevelCourses.has(c.id))
+                    : courses;
+
+                  if (displayed.length === 0) return (
+                    <div style={{ display: "flex", flexDirection: "column",
+                      alignItems: "center", gap: 14, padding: "48px 0" }}>
+                      <p style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 700,
+                        color: "#0F172A", margin: 0 }}>
+                        No subjects in your list for this section.
+                      </p>
+                      <button
+                        onClick={() => setShowMySubjectsOnly(false)}
+                        style={{
+                          fontFamily: SERIF, fontSize: 13, fontWeight: 700,
+                          color: BRAND, background: "#e8f7f9",
+                          border: "1px solid rgba(10,95,110,0.15)",
+                          borderRadius: 10, padding: "9px 20px", cursor: "pointer",
+                        }}
+                      >
+                        Show all subjects
+                      </button>
+                    </div>
+                  );
+
+                  return (
+                    <div style={{ display:"grid",
+                      gridTemplateColumns:"repeat(auto-fill, minmax(200px, 1fr))",
+                      gap:16 }}>
+                      {displayed.map((course, i) => (
+                        <div key={course.id} style={{
+                          position: "relative",
+                          animation:`fadeUp 0.5s ease both ${i * 55}ms`,
+                          opacity:1,
+                        }}>
+                          {/* A-Level subject pin toggle */}
+                          {isALevels(selectedExam) && (
+                            <button
+                              onClick={(e) => toggleALevelCourse(e, course.id)}
+                              title={myALevelCourses.has(course.id)
+                                ? "Remove from my subjects"
+                                : "Add to my subjects"}
+                              style={{
+                                position: "absolute", top: 10, right: 10, zIndex: 2,
+                                width: 28, height: 28, borderRadius: "50%",
+                                border: "none",
+                                background: myALevelCourses.has(course.id)
+                                  ? MINT : "rgba(255,255,255,0.95)",
+                                boxShadow: "0 2px 8px rgba(0,0,0,0.14)",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                cursor: "pointer",
+                                fontSize: 15, fontWeight: 700,
+                                color: myALevelCourses.has(course.id) ? DARK : "#94A3B8",
+                                transition: "all 0.18s",
+                              }}
+                              onMouseEnter={e => {
+                                if (!myALevelCourses.has(course.id)) {
+                                  e.currentTarget.style.background = MINT;
+                                  e.currentTarget.style.color = DARK;
+                                }
+                              }}
+                              onMouseLeave={e => {
+                                if (!myALevelCourses.has(course.id)) {
+                                  e.currentTarget.style.background = "rgba(255,255,255,0.95)";
+                                  e.currentTarget.style.color = "#94A3B8";
+                                }
+                              }}
+                            >
+                              {myALevelCourses.has(course.id) ? "✓" : "+"}
+                            </button>
+                          )}
+                          <CourseCard course={course}
+                            onPress={() => handleSelectCourse(course)} />
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </>
             ) : (
               <p style={{ fontFamily:SERIF, fontSize:14,
                 color:"#94A3B8", fontStyle:"italic" }}>

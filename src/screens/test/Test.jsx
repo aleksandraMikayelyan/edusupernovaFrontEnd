@@ -133,9 +133,10 @@ const TestScreen = () => {
   const [submitError, setSubmitError] = useState(null);
   const [drawerOpen,  setDrawerOpen]  = useState(false);
 
-  // Autosave for open-ended / essay questions in Paper 1
+  // Autosave for open-ended / essay questions in Paper 1.
+  // Use question.testId so the save always targets the correct test session.
   const { saveState: autoSaveState, savedAt: autoSavedAt } = useAutosave(
-    session?.testId,
+    question?.testId ?? session?.testId,
     question?.quizId,
     freeText,
     2000
@@ -165,10 +166,14 @@ const TestScreen = () => {
     setSubmitting(true);
     try {
       const response = selectedOpt ?? freeText;
-      const res = await TestsApi.submitAnswer(session.testId, question.quizId, response);
+      // Use question.testId (from the DTO) to guarantee we submit to the correct
+      // test session — session.testId can be stale if the component re-used state
+      // from a previous test run.
+      const effectiveTestId = question.testId ?? session.testId;
+      const res = await TestsApi.submitAnswer(effectiveTestId, question.quizId, response);
       const feedback = res.data;
       if (feedback.sessionComplete) {
-        navigate("/feedback", { state: { testId: session.testId }, replace: true });
+        navigate("/feedback", { state: { testId: effectiveTestId }, replace: true });
         return;
       }
       setQuestion(feedback.nextQuestion);

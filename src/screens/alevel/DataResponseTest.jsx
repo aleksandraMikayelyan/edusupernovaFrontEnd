@@ -227,7 +227,13 @@ const DataResponseTest = ({ session }) => {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      await saveGroupAnswers();
+      await Promise.all(
+        groups.flatMap(group =>
+          group.questions.map(q =>
+            TestsApi.submitAnswer(testId, q.quizId, answers[q.quizId] ?? "")
+          )
+        )
+      );
       navigate("/feedback", { state: { testId }, replace: true });
     } catch (err) {
       console.error("Submit failed:", err);

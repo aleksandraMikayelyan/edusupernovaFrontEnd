@@ -646,7 +646,7 @@ const IELTSSpeakingTest = ({ session }) => {
     for (const q of currentGroup.questions) {
       const answer = transcripts[q.quizId] ?? "";
       if (answer.trim())
-        await TestsApi.submitAnswer(testId, q.quizId, answer);
+        await TestsApi.submitAnswer(q.testId ?? testId, q.quizId, answer);
     }
   }, [currentGroup, transcripts, testId]);
 

@@ -184,9 +184,11 @@ const MultiEssayTest = ({ session }) => {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      if (q3 && answers[q3.quizId]?.trim()) {
-        await TestsApi.submitAnswer(testId, q3.quizId, answers[q3.quizId]);
-      }
+      await Promise.all(
+        [q1, q2, q3].filter(Boolean).map(q =>
+          TestsApi.submitAnswer(testId, q.quizId, answers[q.quizId] ?? "")
+        )
+      );
       navigate("/feedback", { state: { testId }, replace: true });
     } catch (err) {
       console.error("Submit failed:", err);

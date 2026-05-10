@@ -4,15 +4,19 @@
  * Reads from FeedBackDTO.QuestionFeedbackDTO:
  *   userResponse  — what the student wrote
  *   explanation   — static explanation from DB
- *   aiFeedback    — Groq-generated personalised feedback
+ *   aiFeedback    — Groq-generated personalised feedback (JSON or plain string)
  */
+
+import AiFeedbackDisplay from "./AiFeedbackDisplay.jsx";
 
 const BRAND = "#0a5f6e"; const SERIF = "Newsreader, Georgia, serif";
 
-/** Returns true if AI has not yet scored this question. */
+const MCQ_TYPES = new Set(["MULTIPLE_CHOICE", "TRUE_FALSE_NG", "NUMERIC_INPUT"]);
+
+/** Returns true if AI grading is still pending for this question. */
 const isPending = (item) =>
-  item.aiScore == null ||
-  item.aiFeedback === "AI evaluation in progress...";
+  item.aiFeedback === "AI evaluation in progress..." ||
+  (!MCQ_TYPES.has(item.questionType) && item.userResponse?.trim() && item.aiScore == null);
 
 const Spinner = () => (
   <div style={{
@@ -47,18 +51,6 @@ const OpenEndedAnswer = ({ item }) => {
         </div>
       )}
 
-      {explanation && (
-        <div style={{ background:"#F7F4EF", borderRadius:14, padding:"18px 20px",
-          border:"1px solid #E2EBF0" }}>
-          <p style={{ fontFamily:SERIF, fontSize:11, fontWeight:700,
-            color:"#94A3B8", textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:10 }}>
-            Model answer
-          </p>
-          <p style={{ fontFamily:SERIF, fontSize:15, color:"#374151", lineHeight:1.7 }}>
-            {explanation}
-          </p>
-        </div>
-      )}
 
       {pending ? (
         <div style={{ background:"#F7F4EF", borderRadius:14, padding:"16px 20px",
@@ -79,17 +71,8 @@ const OpenEndedAnswer = ({ item }) => {
               color:BRAND, textTransform:"uppercase", letterSpacing:"0.12em" }}>
               AI Feedback
             </span>
-            {item.aiScore != null && item.aiScore >= 0 && (
-              <span style={{ fontFamily:SERIF, fontSize:12, fontWeight:700,
-                color: item.aiScore >= 6 ? "#15803d" : BRAND,
-                marginLeft:"auto" }}>
-                {item.aiScore.toFixed(1)}/10
-              </span>
-            )}
           </div>
-          <p style={{ fontFamily:SERIF, fontSize:15, color:"#0a4a57", lineHeight:1.7 }}>
-            {aiFeedback}
-          </p>
+          <AiFeedbackDisplay feedback={aiFeedback} />
         </div>
       ) : null}
     </div>

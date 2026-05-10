@@ -21,8 +21,6 @@ const SCRIPT= "Cookie, cursive";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const PDF_KEYWORDS = ["act science","act math","a level","a-level","economy","economics","math","physics","chemistry","biology","statistics"];
-const hasPdfSheet  = (name = "") => PDF_KEYWORDS.some(kw => name.toLowerCase().includes(kw));
 
 const calcReadingTime = (text) => {
   if (!text) return "1 min read";
@@ -61,7 +59,7 @@ const UnitScreen = () => {
 
   // Each element in units[] is UnitWithContent { unit: Unit, content: String }
   const activeIndex = courseData?.units?.findIndex(u => u.unit?.id === activeUnit?.unit?.id) ?? 0;
-  const showPdf     = hasPdfSheet(courseData?.courseName);
+  const showPdf     = courseData?.hasFormulaSheet === true;
   // Prefer papers passed from the course listing (CourseDTO includes papers[]);
   // fall back to whatever getUnits returns if the backend happens to include them.
   const papers      = coursePapers.length > 0 ? coursePapers : (courseData?.papers ?? []);

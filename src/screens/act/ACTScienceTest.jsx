@@ -172,7 +172,7 @@ const ACTScienceTest = ({ session }) => {
     if (!currentGroup) return;
     const pending = currentGroup.questions.filter(q => answers[q.quizId]);
     for (const q of pending)
-      await TestsApi.submitAnswer(testId, q.quizId, answers[q.quizId]);
+      await TestsApi.submitAnswer(q.testId ?? testId, q.quizId, answers[q.quizId]);
   }, [currentGroup, answers, testId]);
 
   const handleNext = async () => {

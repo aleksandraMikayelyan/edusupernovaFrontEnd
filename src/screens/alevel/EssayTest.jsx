@@ -163,7 +163,11 @@ const EssayTest = ({ session }) => {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      await saveCurrentAnswer();
+      await Promise.all(
+        questions.map(q =>
+          TestsApi.submitAnswer(testId, q.quizId, answers[q.quizId] ?? "")
+        )
+      );
       navigate("/feedback", { state: { testId }, replace: true });
     } catch (err) {
       console.error("Submit failed:", err);

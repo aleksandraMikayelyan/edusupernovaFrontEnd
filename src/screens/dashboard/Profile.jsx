@@ -17,7 +17,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate }  from "react-router-dom";
-import { BookOpen, ChartBar, Trophy, ArrowLeft } from "@phosphor-icons/react";
+import { BookOpen, ChartBar, Trophy, SignOut, CheckCircle, ArrowRight, GraduationCap, ArrowSquareOut } from "@phosphor-icons/react";
 import { ProgressApi }  from "../../api/index.js";
 import useAuth          from "../../hooks/useAuth.js";
 import AppHeader        from "../../components/common/appHeader.jsx";
@@ -65,10 +65,12 @@ const ProgressBar = ({ value, color = MINT }) => (
 
 // ── Course progress card ──────────────────────────────────────────────────────
 
-const CourseProgressCard = ({ course, index }) => {
-  const pass   = course.passPercentage ?? 0;
-  const color  = gradeColor(pass);
-  const grade  = gradeLabel(pass);
+const CourseProgressCard = ({ course, index, examName }) => {
+  const navigate = useNavigate();
+  const pass        = course.passPercentage ?? 0;
+  const color       = gradeColor(pass);
+  const grade       = gradeLabel(pass);
+  const isCompleted = course.totalLessons > 0 && course.completedLessons >= course.totalLessons;
 
   return (
     <div style={{
@@ -114,6 +116,22 @@ const CourseProgressCard = ({ course, index }) => {
         </div>
       </div>
 
+      {/* Completed badge */}
+      {isCompleted && (
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          alignSelf: "flex-start",
+          background: "rgba(21,128,61,0.08)",
+          border: "1px solid rgba(21,128,61,0.22)",
+          borderRadius: 8, padding: "4px 10px",
+        }}>
+          <CheckCircle size={13} weight="fill" color="#15803d" />
+          <span style={{ fontFamily: SERIF, fontSize: 11, fontWeight: 700, color: "#15803d" }}>
+            Completed
+          </span>
+        </div>
+      )}
+
       {/* Progress bar */}
       <div>
         <div style={{ display: "flex", justifyContent: "space-between",
@@ -141,6 +159,30 @@ const CourseProgressCard = ({ course, index }) => {
           icon={<Trophy size={13} weight="bold" color={BRAND} />}
         />
       </div>
+
+      {/* Retake / study again button */}
+      <button
+        onClick={() => navigate("/units", { state: { courseId: course.courseId, examType: examName } })}
+        style={{
+          width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+          fontFamily: SERIF, fontSize: 13, fontWeight: 700,
+          color: BRAND, background: "#e8f7f9",
+          border: "1px solid rgba(10,95,110,0.15)",
+          borderRadius: 10, padding: "9px 0",
+          cursor: "pointer", transition: "all 0.18s",
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.background = BRAND;
+          e.currentTarget.style.color = "#fff";
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.background = "#e8f7f9";
+          e.currentTarget.style.color = BRAND;
+        }}
+      >
+        {isCompleted ? "Study again" : "Continue studying"}
+        <ArrowRight size={13} weight="bold" />
+      </button>
     </div>
   );
 };
@@ -179,11 +221,14 @@ const SkeletonCard = ({ i }) => (
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { username, userId } = useAuth();
+  const { username, userId, clearSession } = useAuth();
 
-  const [examProgress, setExamProgress] = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [error,        setError]        = useState(false);
+  const handleLogout = () => { clearSession(); navigate("/login"); };
+
+  const [examProgress,    setExamProgress]    = useState([]);
+  const [loading,         setLoading]         = useState(true);
+  const [error,           setError]           = useState(false);
+  const [myALevelCourses, setMyALevelCourses] = useState(new Set());
 
   useEffect(() => {
     ProgressApi.getMyProgress()
@@ -194,6 +239,14 @@ const Profile = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (!userId) return;
+    try {
+      const saved = localStorage.getItem(`alevel_courses_${userId}`);
+      if (saved) setMyALevelCourses(new Set(JSON.parse(saved)));
+    } catch {}
+  }, [userId]);
+
   const totalCourses   = examProgress.flatMap(e => e.courses).length;
   const totalCompleted = examProgress
     .flatMap(e => e.courses)
@@ -201,6 +254,19 @@ const Profile = () => {
   const overallAvg     = totalCourses === 0 ? 0 :
     examProgress.flatMap(e => e.courses)
       .reduce((acc, c) => acc + c.averageQuizScore, 0) / totalCourses;
+
+  // ── A-Level enrolled subjects ─────────────────────────────────────────────
+  const isALevelExam = (name = "") =>
+    name.toUpperCase().replace(/[\s_-]/g, "").includes("ALEVEL");
+  const aLevelExams  = examProgress.filter(e => isALevelExam(e.examName));
+  const aLevelExamName = aLevelExams[0]?.examName ?? "A-Level";
+  // Courses with progress that the student pinned
+  const aLevelPinnedWithProgress = aLevelExams
+    .flatMap(e => e.courses)
+    .filter(c => myALevelCourses.has(c.courseId));
+  // How many pinned IDs have NO progress data yet
+  const aLevelPinnedWithoutProgress =
+    myALevelCourses.size - aLevelPinnedWithProgress.length;
 
   return (
     <div style={{ minHeight: "100vh", background: CREAM, display: "flex", flexDirection: "column" }}>
@@ -219,6 +285,32 @@ const Profile = () => {
         <div style={{ position: "absolute", inset: 0, opacity: 0.04,
           backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)",
           backgroundSize: "28px 28px", pointerEvents: "none" }} />
+
+        {/* Logout button — absolute top-right */}
+        <button
+          onClick={handleLogout}
+          style={{
+            position: "absolute", top: 24, right: 24, zIndex: 2,
+            display: "flex", alignItems: "center", gap: 8,
+            fontFamily: SERIF, fontSize: 13, fontWeight: 700,
+            color: "rgba(255,255,255,0.7)",
+            background: "rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255,255,255,0.15)",
+            borderRadius: 12, padding: "10px 18px",
+            cursor: "pointer", transition: "all 0.18s",
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.15)";
+            e.currentTarget.style.color = "#fff";
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+            e.currentTarget.style.color = "rgba(255,255,255,0.7)";
+          }}
+        >
+          <SignOut size={16} weight="bold" />
+          Sign out
+        </button>
 
         <div style={{ maxWidth: 1000, margin: "0 auto", position: "relative", zIndex: 1 }}>
           {/* Avatar circle */}
@@ -286,6 +378,100 @@ const Profile = () => {
       <main style={{ flex: 1, padding: "44px 48px 96px",
         maxWidth: 1048, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
 
+        {/* ── My A-Level Subjects ── */}
+        {!loading && !error && myALevelCourses.size > 0 && (
+          <section style={{ marginBottom: 56 }}>
+            {/* Section header */}
+            <div style={{ marginBottom: 24, paddingBottom: 18,
+              borderBottom: "1px solid #E2EBF0",
+              display: "flex", alignItems: "flex-end",
+              justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+              <div>
+                <p style={{ fontFamily: SERIF, fontSize: 11, fontWeight: 700,
+                  letterSpacing: "0.14em", textTransform: "uppercase",
+                  color: MINT, marginBottom: 4 }}>
+                  My enrolled subjects
+                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <GraduationCap size={26} weight="duotone" color={BRAND} />
+                  <h2 style={{ fontFamily: SERIF, fontSize: 26, fontWeight: 700,
+                    color: "#0F172A", letterSpacing: "-0.6px", margin: 0 }}>
+                    {aLevelExamName}
+                  </h2>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate("/courses")}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  fontFamily: SERIF, fontSize: 13, fontWeight: 700,
+                  color: BRAND, background: "#e8f7f9",
+                  border: "1px solid rgba(10,95,110,0.15)",
+                  borderRadius: 10, padding: "8px 16px",
+                  cursor: "pointer", transition: "all 0.18s", flexShrink: 0,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = BRAND; e.currentTarget.style.color = "#fff"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "#e8f7f9"; e.currentTarget.style.color = BRAND; }}
+              >
+                Manage subjects
+                <ArrowSquareOut size={13} weight="bold" />
+              </button>
+            </div>
+
+            {aLevelPinnedWithProgress.length > 0 ? (
+              <>
+                <div style={{ display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+                  {aLevelPinnedWithProgress.map((course, ci) => (
+                    <CourseProgressCard
+                      key={course.courseId}
+                      course={course}
+                      index={ci}
+                      examName={aLevelExamName}
+                    />
+                  ))}
+                </div>
+                {aLevelPinnedWithoutProgress > 0 && (
+                  <p style={{ fontFamily: SERIF, fontSize: 13, color: "#94A3B8",
+                    marginTop: 14, fontStyle: "italic" }}>
+                    {aLevelPinnedWithoutProgress} more subject{aLevelPinnedWithoutProgress !== 1 ? "s" : ""} selected — no tests started yet.
+                  </p>
+                )}
+              </>
+            ) : (
+              /* All selected subjects have no progress yet */
+              <div style={{
+                background: "#fff", border: "1px solid #E8F0F4",
+                borderRadius: 16, padding: "28px 28px",
+                display: "flex", alignItems: "center",
+                justifyContent: "space-between", flexWrap: "wrap", gap: 16,
+              }}>
+                <div>
+                  <p style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 700,
+                    color: "#0F172A", margin: 0, marginBottom: 4 }}>
+                    {myALevelCourses.size} subject{myALevelCourses.size !== 1 ? "s" : ""} enrolled
+                  </p>
+                  <p style={{ fontFamily: SERIF, fontSize: 13, color: "#94A3B8", margin: 0 }}>
+                    You haven't started any tests in your selected subjects yet.
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate("/courses")}
+                  style={{
+                    fontFamily: SERIF, fontSize: 13, fontWeight: 700,
+                    background: MINT, color: DARK, border: "none",
+                    borderRadius: 10, padding: "10px 22px",
+                    cursor: "pointer", flexShrink: 0,
+                    boxShadow: "0 4px 16px rgba(93,202,165,0.3)",
+                  }}
+                >
+                  Start studying
+                </button>
+              </div>
+            )}
+          </section>
+        )}
+
         {loading ? (
           <div style={{ display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
@@ -322,7 +508,9 @@ const Profile = () => {
             </button>
           </div>
         ) : (
-          examProgress.map((exam, ei) => (
+          examProgress
+            .filter(e => !(myALevelCourses.size > 0 && isALevelExam(e.examName)))
+            .map((exam, ei) => (
             <section key={exam.examId} style={{ marginBottom: 52 }}>
               {/* Exam heading */}
               <div style={{ marginBottom: 24, paddingBottom: 18,
@@ -352,6 +540,7 @@ const Profile = () => {
                       key={course.courseId}
                       course={course}
                       index={ei * 10 + ci}
+                      examName={exam.examName}
                     />
                   ))}
                 </div>

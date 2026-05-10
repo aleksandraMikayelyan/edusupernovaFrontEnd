@@ -29,8 +29,9 @@ import Register  from "./screens/auth/Register.jsx";
 import UserInterface from "./screens/dashboard/UserInterface.jsx";
 import Units         from "./screens/dashboard/Units.jsx";
 import Test          from "./screens/test/Test.jsx";
-import FeedbackPage  from "./screens/dashboard/FeedbackPage.jsx";
-import Profile       from "./screens/dashboard/Profile.jsx";
+import FeedbackPage     from "./screens/dashboard/FeedbackPage.jsx";
+import Profile          from "./screens/dashboard/Profile.jsx";
+import TestHistoryPage  from "./screens/dashboard/TestHistoryPage.jsx";
 
 // ── Admin screens ─────────────────────────────────────────────────────────────
 import AdminInterface from "./screens/admin/AdminInterface.jsx";
@@ -62,6 +63,7 @@ const AppRoutes = () => (
     <Route path="/test"     element={<ProtectedRoute><Test /></ProtectedRoute>} />
     <Route path="/feedback" element={<ProtectedRoute><FeedbackPage /></ProtectedRoute>} />
     <Route path="/profile"  element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+    <Route path="/history"  element={<ProtectedRoute><TestHistoryPage /></ProtectedRoute>} />
 
     {/* ── Admin (protected + role check) ── */}
     <Route path="/admin"    element={<ProtectedRoute adminOnly><AdminInterface /></ProtectedRoute>} />

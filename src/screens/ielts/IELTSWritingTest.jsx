@@ -226,9 +226,18 @@ const saveGroupAnswers = useCallback(async () => {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      await saveGroupAnswers();
+      await Promise.all(
+        groups.flatMap(group =>
+          group.questions.map(q =>
+            TestsApi.submitAnswer(q.testId || testId, q.quizId, answers[q.quizId] ?? "")
+          )
+        )
+      );
       navigate("/feedback", { state: { testId }, replace: true });
-    } catch { setSubmitting(false); }
+    } catch (err) {
+      console.error("Submit failed:", err);
+      setSubmitting(false);
+    }
   };
 
   if (loading) return <LoadingScreen />;

@@ -17,7 +17,7 @@ const isOpenEndedType = (type) =>
   ["ESSAY", "OPEN_ENDED", "SHORT_ANSWER"].includes(type?.toUpperCase());
 
 const QuestionCard = ({ item, index }) => {
-  const openEnded   = isOpenEndedType(item.type);
+  const openEnded   = isOpenEndedType(item.questionType ?? item.type);
   const questionNum = item.questionNumber ?? index + 1;
   const isCorrect   = item.isCorrect ?? false;
   const aiScore     = item.aiScore;
@@ -71,14 +71,6 @@ const QuestionCard = ({ item, index }) => {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {aiScore != null && (
-            <span style={{
-              fontFamily: SERIF, fontSize: 13, fontWeight: 700,
-              color: aiScore >= 6 ? "#15803d" : BRAND,
-            }}>
-              {aiScore.toFixed(1)}/10
-            </span>
-          )}
           {statusLabel && (
             <span style={{
               fontFamily: SERIF, fontSize: 12, fontWeight: 700,

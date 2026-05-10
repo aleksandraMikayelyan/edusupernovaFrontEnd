@@ -41,8 +41,8 @@ const PASSAGE_TYPE_COLORS = {
   "default":   { bg: "#e8f7f9", border: "rgba(10,95,110,0.3)", text: BRAND },
 };
 
-const getPassageColor = (title = "") => {
-  const t = title.toLowerCase();
+const getPassageColor = (title) => {
+  const t = (title ?? "").toLowerCase();
   if (t.includes("liter")) return PASSAGE_TYPE_COLORS.literary;
   if (t.includes("social")) return PASSAGE_TYPE_COLORS.social;
   if (t.includes("human")) return PASSAGE_TYPE_COLORS.humanit;
@@ -153,7 +153,7 @@ const ACTReadingTest = ({ session }) => {
     if (!currentGroup) return;
     const pending = currentGroup.questions.filter(q => answers[q.quizId]);
     for (const q of pending)
-      await TestsApi.submitAnswer(testId, q.quizId, answers[q.quizId]);
+      await TestsApi.submitAnswer(q.testId ?? testId, q.quizId, answers[q.quizId]);
   }, [currentGroup, answers, testId]);
 
   const handleNext = async () => {

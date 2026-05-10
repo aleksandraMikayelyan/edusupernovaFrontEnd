@@ -19,10 +19,12 @@ import { TestsApi }  from "../../api/index.js";
 const POLL_INTERVAL_MS = 3_000;
 const POLL_TIMEOUT_MS  = 120_000; // 2 minutes
 
+const MCQ_TYPES = new Set(["MULTIPLE_CHOICE", "TRUE_FALSE_NG", "NUMERIC_INPUT"]);
+
 const hasPending = (report) =>
-  report?.questionsFeedback?.some(
-    q => q.aiScore == null ||
-         q.aiFeedback === "AI evaluation in progress..."
+  report?.questionsFeedback?.some(q =>
+    q.aiFeedback === "AI evaluation in progress..." ||
+    (!MCQ_TYPES.has(q.questionType) && q.userResponse?.trim() && q.aiScore == null)
   ) ?? false;
 
 const DARK  = "#062f37";
@@ -115,10 +117,13 @@ const FeedbackPage = () => {
 
   const pollRef    = useRef(null);
   const timeoutRef = useRef(null);
+  const mountedRef = useRef(true);
 
   const stopPolling = () => {
     clearInterval(pollRef.current);
     clearTimeout(timeoutRef.current);
+    pollRef.current    = null;
+    timeoutRef.current = null;
   };
 
   const fetchReport = () => {
@@ -126,8 +131,8 @@ const FeedbackPage = () => {
     setError(null);
     TestsApi.getReport(testId)
       .then(res => {
+        if (!mountedRef.current) return; // navigated away before response arrived
         setReport(res.data);
-        // Start polling if any question is still pending AI grading
         if (hasPending(res.data)) {
           timeoutRef.current = setTimeout(() => {
             stopPolling();
@@ -135,23 +140,31 @@ const FeedbackPage = () => {
           }, POLL_TIMEOUT_MS);
 
           pollRef.current = setInterval(() => {
+            if (!mountedRef.current) { stopPolling(); return; }
             TestsApi.getReport(testId)
               .then(r => {
+                if (!mountedRef.current) { stopPolling(); return; }
                 setReport(r.data);
                 if (!hasPending(r.data)) stopPolling();
               })
-              .catch(() => {}); // silent — keep polling
+              .catch(() => {});
           }, POLL_INTERVAL_MS);
         }
       })
-      .catch(err => setError(err.message ?? "Could not load your results."))
-      .finally(() => setLoading(false));
+      .catch(err => {
+        if (mountedRef.current) setError(err.message ?? "Could not load your results.");
+      })
+      .finally(() => { if (mountedRef.current) setLoading(false); });
   };
 
   useEffect(() => {
+    mountedRef.current = true;
     if (!testId) { setLoading(false); return; }
     fetchReport();
-    return stopPolling; // cleanup on unmount
+    return () => {
+      mountedRef.current = false;
+      stopPolling();
+    };
   }, [testId]);
 
   if (loading) return <LoadingScreen />;

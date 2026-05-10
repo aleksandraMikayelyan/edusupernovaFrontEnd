@@ -234,7 +234,7 @@ const SATReadingTest = ({ session }) => {
     // Save current answer
     if (answers[qIndex] && current) {
       try {
-        await TestsApi.submitAnswer(testId, current.quizId, answers[qIndex]);
+        await TestsApi.submitAnswer(current.testId ?? testId, current.quizId, answers[qIndex]);
       } catch (err) {
         setSubmitError(err.message ?? "Could not save answer. Please try again.");
         return;
@@ -261,10 +261,10 @@ const SATReadingTest = ({ session }) => {
       await Promise.allSettled(
         pending.map((q, _) => {
           const idx = questions.indexOf(q);
-          return TestsApi.submitAnswer(testId, q.quizId, answers[idx]);
+          return TestsApi.submitAnswer(q.testId ?? testId, q.quizId, answers[idx]);
         })
       );
-      navigate("/feedback", { state: { testId }, replace: true });
+      navigate("/feedback", { state: { testId: questions[0]?.testId ?? testId }, replace: true });
     } catch { setSubmitting(false); }
   };
 

@@ -29,6 +29,8 @@ const indentDepth = (ind)  => ind < 4 ? 0 : ind < 8 ? 1 : 2;
  */
 const isTrueHeading = (trimmed, indent) => {
   if (indent > 0 || trimmed.length < 3) return false;
+  // Lines ending with ":" are subheadings (they introduce content below), not section titles
+  if (trimmed.endsWith(":")) return false;
 
   // Pattern 1: zero lowercase letters in the entire string
   const letters = trimmed.replace(/[^a-zA-Z]/g, "");
@@ -188,13 +190,24 @@ const parseUnitText = (raw) => {
       i++; continue;
     }
 
-    // Subheading: mixed-case, ends with colon, SHORT (≤ 90 chars, so long sentences are excluded)
+    // ALL-CAPS at non-zero indent that isn't a definition or bullet → sub-section label
+    if (
+      indent > 0 &&
+      !/[a-z]/.test(trimmed) &&
+      /[A-Z]{2,}/.test(trimmed) &&
+      !isBulletLine(trimmed)
+    ) {
+      push({ type: "subheading", text: trimmed.replace(/:$/, "") });
+      i++; continue;
+    }
+
+    // Subheading: ends with colon, SHORT (≤ 90 chars, so long sentences are excluded)
+    // Applies to both mixed-case AND ALL-CAPS lines (ALL-CAPS with ":" are section intros, not titles)
     if (
       indent === 0 &&
       trimmed.endsWith(":") &&
       trimmed.length <= 90 &&
-      trimmed.length > 5 &&
-      /[a-z]/.test(trimmed)
+      trimmed.length > 5
     ) {
       push({ type: "subheading", text: trimmed.replace(/:$/, "") });
       i++; continue;
@@ -221,6 +234,28 @@ const parseUnitText = (raw) => {
       lastBodyIdx = blocks.length - 1;
     }
     i++;
+  }
+
+  // ── Post-process: demote consecutive headings ────────────────────────────
+  // If a heading has only spacers/dividers between it and the previous
+  // heading/subheading (no body, bullet, definition, or callout), it is
+  // a sub-section label, not a top-level section title.
+  for (let pi = 0; pi < blocks.length; pi++) {
+    if (blocks[pi].type !== "heading") continue;
+    for (let pj = pi - 1; pj >= 0; pj--) {
+      const bt = blocks[pj].type;
+      if (bt === "spacer" || bt === "divider") continue;
+      if (bt === "heading" || bt === "subheading") {
+        blocks[pi] = { ...blocks[pi], type: "subheading" };
+      }
+      break;
+    }
+  }
+
+  // Renumber the surviving headings sequentially
+  let n = 0;
+  for (const b of blocks) {
+    if (b.type === "heading") b.number = ++n;
   }
 
   return blocks;

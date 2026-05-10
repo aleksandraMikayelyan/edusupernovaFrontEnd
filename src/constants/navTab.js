@@ -23,6 +23,7 @@
  */
 
 export const MAIN_TABS = [
-  { icon: "home-outline", label: "Home",    path: "/"        },
-  { icon: "book-outline", label: "Courses", path: "/courses" },
+  { icon: "home-outline",    label: "Home",    path: "/"        },
+  { icon: "book-outline",    label: "Courses", path: "/courses" },
+  { icon: "history-outline", label: "History", path: "/history" },
 ];
