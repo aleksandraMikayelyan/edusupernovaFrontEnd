@@ -20,8 +20,14 @@ export const setAuthToken = (token) => { _token = token; };
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+// In dev: Vite proxy forwards /api → localhost:8080 (no env var needed)
+// In prod: set VITE_API_URL=https://your-backend.com in Vercel env settings
+const BASE_URL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : "/api";
+
 const client = axios.create({
-  baseURL: "/api",         // Vite proxy forwards to Spring Boot :8080
+  baseURL: BASE_URL,
   timeout: 30_000,
   headers: { "Content-Type": "application/json" },
 });
