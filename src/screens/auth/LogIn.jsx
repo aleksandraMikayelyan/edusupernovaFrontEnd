@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { ArrowRight } from "@phosphor-icons/react";
+import useWindowWidth from "../../hooks/useWindowWidth.js";
 import { GoogleLogin } from "@react-oauth/google";
 import { AuthApi } from "../../api/index.js";
 import useAuth from "../../hooks/useAuth.js";
@@ -26,6 +27,8 @@ const Spinner = () => (
 const LoginScreen = () => {
   const navigate = useNavigate();
   const { saveSession } = useAuth();
+  const width = useWindowWidth();
+  const isMobile = width < 768;
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
   const [loading,  setLoading]  = useState(false);
@@ -67,7 +70,7 @@ const LoginScreen = () => {
   };
 
   return (
-    <div style={{ display:"flex", minHeight:"100vh" }}>
+    <div style={{ display:"flex", flexDirection: isMobile ? "column" : "row", minHeight:"100vh" }}>
       <style>{`
         @keyframes lspin { to { transform: rotate(360deg); } }
         @keyframes lfadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
@@ -86,11 +89,13 @@ const LoginScreen = () => {
 
       {/* ── Left panel — dark brand ── */}
       <div style={{
-        width:"46%", flexShrink:0,
+        width: isMobile ? "100%" : "46%",
+        flexShrink:0,
         background:`linear-gradient(155deg, #021a1f 0%, ${DARK} 40%, ${BRAND} 100%)`,
         display:"flex", flexDirection:"column", justifyContent:"space-between",
-        padding:"48px 56px",
+        padding: isMobile ? "32px 24px" : "48px 56px",
         position:"relative", overflow:"hidden",
+        minHeight: isMobile ? "auto" : undefined,
       }}>
         {/* Dot pattern */}
         <div style={{ position:"absolute", inset:0, opacity:0.05,
@@ -115,11 +120,11 @@ const LoginScreen = () => {
         </div>
 
         {/* Main copy */}
-        <div style={{ position:"relative", zIndex:1 }}>
+        <div style={{ position:"relative", zIndex:1, marginTop: isMobile ? 24 : 0 }}>
           <h1 style={{
-            fontFamily:SERIF, fontSize:"clamp(32px,3.2vw,48px)", fontWeight:700,
-            color:"#fff", lineHeight:1.1, letterSpacing:"-1.5px",
-            margin:"0 0 20px",
+            fontFamily:SERIF, fontSize: isMobile ? "clamp(28px,7vw,38px)" : "clamp(32px,3.2vw,48px)",
+            fontWeight:700, color:"#fff", lineHeight:1.1, letterSpacing:"-1.5px",
+            margin:"0 0 16px",
             animation:"lfadeUp 0.7s ease both 100ms",
           }}>
             Welcome back.<br />
@@ -127,14 +132,14 @@ const LoginScreen = () => {
           </h1>
           <p style={{ fontFamily:SERIF, fontSize:15,
             color:"rgba(255,255,255,0.45)", lineHeight:1.8,
-            maxWidth:320, margin:"0 0 48px",
+            maxWidth:320, margin: isMobile ? "0 0 20px" : "0 0 48px",
             animation:"lfadeUp 0.7s ease both 220ms",
           }}>
             Your next grade upgrade is one session away.
           </p>
 
-          {/* Proof points */}
-          <div style={{ display:"flex", flexDirection:"column", gap:14,
+          {/* Proof points — hide on mobile to keep it compact */}
+          {!isMobile && <div style={{ display:"flex", flexDirection:"column", gap:14,
             animation:"lfadeUp 0.7s ease both 340ms" }}>
             {[
               "500+ real past exam questions",
@@ -153,15 +158,17 @@ const LoginScreen = () => {
                   color:"rgba(255,255,255,0.5)" }}>{t}</span>
               </div>
             ))}
-          </div>
+          </div>}
         </div>
 
-        {/* Bottom tagline */}
-        <p style={{ fontFamily:SERIF, fontSize:12,
-          color:"rgba(255,255,255,0.2)",
-          position:"relative", zIndex:1 }}>
-          © 2026 EduSupernova · Free forever
-        </p>
+        {/* Bottom tagline — hide on mobile */}
+        {!isMobile && (
+          <p style={{ fontFamily:SERIF, fontSize:12,
+            color:"rgba(255,255,255,0.2)",
+            position:"relative", zIndex:1 }}>
+            © 2026 EduSupernova · Free forever
+          </p>
+        )}
       </div>
 
       {/* ── Right panel — form ── */}
@@ -169,7 +176,7 @@ const LoginScreen = () => {
         flex:1, background:"#fff",
         display:"flex", flexDirection:"column",
         alignItems:"center", justifyContent:"center",
-        padding:"60px 64px",
+        padding: isMobile ? "36px 20px 48px" : "60px 64px",
       }}>
         <div style={{ width:"100%", maxWidth:380 }}>
 

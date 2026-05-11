@@ -32,8 +32,10 @@ import client from "./client.js";
 export const AuthApi = {
   /** Returns AuthResponse */
   login:    (email, password)           => client.post("/users/login",    { email, password }),
-  /** Returns AuthResponse. rol is NOT sent — backend assigns STUDENT by default. */
+  /** Returns MessageResponse (202). Account inactive until verifyEmail succeeds. */
   register: (username, email, password) => client.post("/users/register", { username, email, password }),
+  /** Step 2 of registration — validates the 6-digit code and returns AuthResponse (200). */
+  verifyEmail: (email, code)            => client.post("/users/verify-email", { email, code }),
   /** Google OAuth — send the Google ID token; backend returns AuthResponse */
   googleAuth: (token)                   => client.post("/users/google-auth", { idToken: token }),
 };

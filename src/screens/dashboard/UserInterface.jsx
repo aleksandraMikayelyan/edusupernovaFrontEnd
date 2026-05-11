@@ -6,6 +6,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Books } from "@phosphor-icons/react";
+import useWindowWidth from "../../hooks/useWindowWidth.js";
 import { CoursesApi } from "../../api/index.js";
 import useAuth               from "../../hooks/useAuth.js";
 import AppHeader             from "../../components/common/appHeader.jsx";
@@ -68,6 +69,9 @@ const UserInterface = () => {
   const navigate = useNavigate();
   const { userId } = useAuth();
   const [coursesRef, coursesInView] = useInView(0.1);
+
+  const width = useWindowWidth();
+  const isMobile = width < 768;
 
   const [exams,          setExams]          = useState([]);
   const [selectedExam,   setSelectedExam]   = useState(null);
@@ -211,7 +215,8 @@ const UserInterface = () => {
       {/* ── Hero strip ── */}
       <div style={{
         background:`linear-gradient(145deg, #021a1f 0%, ${DARK} 40%, ${BRAND} 100%)`,
-        padding:"56px 48px 72px", position:"relative", overflow:"hidden",
+        padding: isMobile ? "36px 20px 56px" : "56px 48px 72px",
+        position:"relative", overflow:"hidden",
       }}>
         <div style={{ position:"absolute", inset:0, opacity:0.04,
           backgroundImage:"radial-gradient(circle, #fff 1px, transparent 1px)",
@@ -248,7 +253,7 @@ const UserInterface = () => {
         </div>
       </div>
 
-      <main style={{ flex:1, padding:"44px 48px 96px",
+      <main style={{ flex:1, padding: isMobile ? "28px 16px 72px" : "44px 48px 96px",
         maxWidth:1048, margin:"0 auto", width:"100%", boxSizing:"border-box" }}>
 
         {/* ── Exam selector ── */}
@@ -498,8 +503,10 @@ const UserInterface = () => {
 
                   return (
                     <div style={{ display:"grid",
-                      gridTemplateColumns:"repeat(auto-fill, minmax(200px, 1fr))",
-                      gap:16 }}>
+                      gridTemplateColumns: isMobile
+                        ? "repeat(2, 1fr)"
+                        : "repeat(auto-fill, minmax(200px, 1fr))",
+                      gap: isMobile ? 12 : 16 }}>
                       {displayed.map((course, i) => (
                         <div key={course.id} style={{
                           position: "relative",

@@ -5,8 +5,9 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FilePdf, CheckCircle, CaretRight, NotePencil, ListBullets } from "@phosphor-icons/react";
+import { FilePdf, CheckCircle, CaretRight, NotePencil, ListBullets, List } from "@phosphor-icons/react";
 import { CoursesApi } from "../../api/index.js";
+import useWindowWidth from "../../hooks/useWindowWidth.js";
 import AppFooter          from "../../components/common/appFooter.jsx";
 import LoadingScreen      from "../../components/common/LoadingScreen.jsx";
 import ArticleBody        from "../../components/units/ArticleBody.jsx";
@@ -39,7 +40,10 @@ const UnitScreen = () => {
   const [activeUnit,     setActiveUnit]     = useState(null);
   const [loading,        setLoading]        = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [sidebarOpen,    setSidebarOpen]    = useState(false);
   const contentRef = useRef(null);
+  const width = useWindowWidth();
+  const isMobile = width < 768;
 
   useEffect(() => {
     CoursesApi.getUnits(courseId)
@@ -83,7 +87,7 @@ const UnitScreen = () => {
         {/* Hero banner */}
         <div style={{
           background:`linear-gradient(135deg, #021a1f 0%, ${DARK} 40%, ${BRAND} 75%, #1c94a7 100%)`,
-          padding:"40px 80px 48px",
+          padding: isMobile ? "28px 20px 36px" : "40px 80px 48px",
           position:"relative", overflow:"hidden",
         }}>
           <div style={{ position:"absolute", inset:0, opacity:0.04,
@@ -127,7 +131,7 @@ const UnitScreen = () => {
         <div style={{ height:3, background:`linear-gradient(90deg, ${MINT}, transparent)` }} />
 
         {/* Article body */}
-        <div style={{ padding:"52px 80px 0" }}>
+        <div style={{ padding: isMobile ? "28px 20px 0" : "52px 80px 0" }}>
           {summaryText?.trim() ? (
             <ArticleBody text={summaryText} />
           ) : (
@@ -159,7 +163,7 @@ const UnitScreen = () => {
 
         {/* Unit navigation — bottom of article */}
         {courseData?.units && activeIndex < courseData.units.length - 1 && (
-          <div style={{ padding:"0 80px 64px",
+          <div style={{ padding: isMobile ? "0 20px 48px" : "0 80px 64px",
             display:"flex", justifyContent:"flex-end" }}>
             <button
               onClick={() => setActiveUnit(courseData.units[activeIndex + 1])}
@@ -210,17 +214,50 @@ const UnitScreen = () => {
         }} />
       </div>
 
+      {/* Mobile: floating sidebar toggle */}
+      {isMobile && (
+        <button
+          onClick={() => setSidebarOpen(o => !o)}
+          style={{
+            position:"fixed", bottom:24, right:20, zIndex:50,
+            width:52, height:52, borderRadius:"50%",
+            background:BRAND, border:"none", cursor:"pointer",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            boxShadow:"0 6px 24px rgba(10,95,110,0.4)",
+          }}
+        >
+          <List size={22} color="#fff" weight="bold" />
+        </button>
+      )}
+
+      {/* Mobile: sidebar overlay backdrop */}
+      {isMobile && sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            position:"fixed", inset:0, zIndex:30,
+            background:"rgba(0,0,0,0.4)",
+          }}
+        />
+      )}
+
       {/* Two-column layout */}
-      <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
+      <div style={{ display:"flex", flex:1, overflow:"hidden", position:"relative" }}>
 
         {/* Sidebar */}
         <aside style={{
-          width:280, flexShrink:0,
+          width: isMobile ? 300 : 280,
+          flexShrink:0,
           background:"#fff",
           borderRight:"1px solid #E8F0F4",
           overflowY:"auto",
           display:"flex", flexDirection:"column",
           boxShadow:"2px 0 16px rgba(0,0,0,0.03)",
+          ...(isMobile ? {
+            position:"fixed", top:0, left:0, bottom:0, zIndex:40,
+            transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
+            transition:"transform 0.28s ease",
+          } : {}),
         }}>
           {/* Sidebar header */}
           <div style={{ padding:"20px 18px 16px",
@@ -260,7 +297,10 @@ const UnitScreen = () => {
               {courseData?.units?.map((u, idx) => (
                 <UnitTab key={u.unit?.id ?? idx} unit={u.unit} index={idx}
                   isActive={activeUnit?.unit?.id === u.unit?.id}
-                  onPress={() => activeUnit?.unit?.id !== u.unit?.id && setActiveUnit(u)} />
+                  onPress={() => {
+                    if (activeUnit?.unit?.id !== u.unit?.id) setActiveUnit(u);
+                    if (isMobile) setSidebarOpen(false);
+                  }} />
               ))}
             </CollapsibleSection>
           </div>

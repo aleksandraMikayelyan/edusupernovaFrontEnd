@@ -5,8 +5,9 @@
 
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, CheckCircle, BookOpen, Brain, Trophy, ChartBar, Lightning, Exam } from "@phosphor-icons/react";
+import { ArrowRight, CheckCircle, BookOpen, Brain, Trophy, ChartBar, Lightning, Exam, List, X } from "@phosphor-icons/react";
 import peacockIcon from "../../assets/iconoEdusupernovaSinFondo.png";
+import useWindowWidth from "../../hooks/useWindowWidth.js";
 
 const SERIF  = "Newsreader, Georgia, serif";
 const SCRIPT = "Cookie, cursive";
@@ -274,6 +275,10 @@ const Home = () => {
   const [stepsRef,    stepsInView]    = useInView(0.2);
   const [ctaRef,      ctaInView]      = useInView(0.3);
   const [heroLoaded, setHeroLoaded]   = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const width = useWindowWidth();
+  const isMobile = width < 768;
+  const isTablet = width < 1024;
 
   useEffect(() => {
     const t = setTimeout(() => setHeroLoaded(true), 80);
@@ -306,6 +311,7 @@ const Home = () => {
         .cta-primary        { transition:transform 0.18s, background 0.18s !important; }
         .cta-ghost:hover    { background:rgba(255,255,255,0.1) !important; border-color:rgba(255,255,255,0.35) !important; }
         .exam-pill:hover    { background:#e8f7f9 !important; border-color:${BRAND} !important; color:${BRAND} !important; }
+        .mobile-menu-link:hover { background:rgba(255,255,255,0.08) !important; }
       `}</style>
 
       {/* ═══════════════════════════════════════════════════════════════════════
@@ -332,45 +338,92 @@ const Home = () => {
         {/* ── Nav ── */}
         <nav style={{
           display:"flex", alignItems:"center", justifyContent:"space-between",
-          padding:"20px 48px", flexShrink:0, position:"relative", zIndex:10,
+          padding: isMobile ? "16px 20px" : "20px 48px",
+          flexShrink:0, position:"relative", zIndex:10,
           animation: heroLoaded ? "slideDown 0.6s ease both 100ms" : "none",
           opacity: heroLoaded ? undefined : 0,
         }}>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
             <img src={peacockIcon} alt="logo" style={{ width:34, height:34, objectFit:"contain" }} />
-            <span style={{ fontFamily:SCRIPT, fontSize:26, color:"#fff", letterSpacing:0.3 }}>
+            <span style={{ fontFamily:SCRIPT, fontSize:isMobile ? 22 : 26, color:"#fff", letterSpacing:0.3 }}>
               edusupernova
             </span>
           </div>
-          <div style={{ display:"flex", gap:8 }}>
-            <button className="nav-pill-btn cta-ghost"
-              onClick={() => navigate("/login")}
-              style={{ background:"rgba(255,255,255,0.07)",
-                border:"1px solid rgba(255,255,255,0.15)",
-                color:"rgba(255,255,255,0.85)", padding:"9px 24px", borderRadius:999,
-                fontFamily:SERIF, fontSize:14, cursor:"pointer",
-                transition:"all 0.15s" }}>
+
+          {/* Desktop nav buttons */}
+          {!isMobile && (
+            <div style={{ display:"flex", gap:8 }}>
+              <button className="nav-pill-btn cta-ghost"
+                onClick={() => navigate("/login")}
+                style={{ background:"rgba(255,255,255,0.07)",
+                  border:"1px solid rgba(255,255,255,0.15)",
+                  color:"rgba(255,255,255,0.85)", padding:"9px 24px", borderRadius:999,
+                  fontFamily:SERIF, fontSize:14, cursor:"pointer",
+                  transition:"all 0.15s" }}>
+                Log in
+              </button>
+              <button className="cta-primary"
+                onClick={() => navigate("/register")}
+                style={{ background:"#fff", border:"none",
+                  color:BRAND, padding:"9px 24px", borderRadius:999,
+                  fontFamily:SERIF, fontSize:14, fontWeight:700, cursor:"pointer" }}>
+                Get started — it's free
+              </button>
+            </div>
+          )}
+
+          {/* Mobile hamburger */}
+          {isMobile && (
+            <button
+              onClick={() => setMobileMenuOpen(o => !o)}
+              style={{ background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.15)",
+                borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex",
+                alignItems:"center", justifyContent:"center" }}>
+              {mobileMenuOpen
+                ? <X size={20} color="#fff" weight="bold" />
+                : <List size={20} color="#fff" weight="bold" />}
+            </button>
+          )}
+        </nav>
+
+        {/* Mobile dropdown menu */}
+        {isMobile && mobileMenuOpen && (
+          <div style={{
+            position:"absolute", top:72, left:0, right:0, zIndex:50,
+            background:"rgba(6,47,55,0.97)", backdropFilter:"blur(16px)",
+            borderBottom:"1px solid rgba(255,255,255,0.08)",
+            padding:"16px 20px 20px", display:"flex", flexDirection:"column", gap:10,
+          }}>
+            <button className="mobile-menu-link"
+              onClick={() => { navigate("/login"); setMobileMenuOpen(false); }}
+              style={{ fontFamily:SERIF, fontSize:16, color:"rgba(255,255,255,0.85)",
+                background:"transparent", border:"none", cursor:"pointer",
+                textAlign:"left", padding:"12px 16px", borderRadius:12, transition:"background 0.15s" }}>
               Log in
             </button>
             <button className="cta-primary"
-              onClick={() => navigate("/register")}
-              style={{ background:"#fff", border:"none",
-                color:BRAND, padding:"9px 24px", borderRadius:999,
-                fontFamily:SERIF, fontSize:14, fontWeight:700, cursor:"pointer" }}>
+              onClick={() => { navigate("/register"); setMobileMenuOpen(false); }}
+              style={{ background:MINT, border:"none", color:DARK,
+                padding:"13px 20px", borderRadius:12,
+                fontFamily:SERIF, fontSize:15, fontWeight:700, cursor:"pointer",
+                textAlign:"center" }}>
               Get started — it's free
             </button>
           </div>
-        </nav>
+        )}
 
         {/* ── Hero body ── */}
         <div style={{
-          flex:1, display:"flex", alignItems:"center",
-          padding:"20px 48px 80px",
-          gap:60, position:"relative", zIndex:2,
+          flex:1, display:"flex",
+          flexDirection: isMobile ? "column" : "row",
+          alignItems: isMobile ? "flex-start" : "center",
+          padding: isMobile ? "24px 20px 64px" : "20px 48px 80px",
+          gap: isMobile ? 40 : 60,
+          position:"relative", zIndex:2,
         }}>
 
           {/* Left column */}
-          <div style={{ flex:"0 0 auto", maxWidth:560 }}>
+          <div style={{ flex:"0 0 auto", maxWidth: isMobile ? "100%" : 560 }}>
             <div style={{
               animation: heroLoaded ? "fadeUp 0.7s ease both 200ms" : "none",
               opacity: heroLoaded ? undefined : 0,
@@ -459,16 +512,18 @@ const Home = () => {
             </div>
           </div>
 
-          {/* Right column — product preview */}
-          <div style={{
-            flex:1, display:"flex", justifyContent:"center", alignItems:"center",
-            animation: heroLoaded ? "fadeUp 0.9s ease both 500ms" : "none",
-            opacity: heroLoaded ? undefined : 0,
-          }}>
-            <div className="hero-card" style={{ width:"100%", maxWidth:420 }}>
-              <ProductPreview />
+          {/* Right column — product preview (hidden on mobile to keep hero clean) */}
+          {!isMobile && (
+            <div style={{
+              flex:1, display:"flex", justifyContent:"center", alignItems:"center",
+              animation: heroLoaded ? "fadeUp 0.9s ease both 500ms" : "none",
+              opacity: heroLoaded ? undefined : 0,
+            }}>
+              <div className="hero-card" style={{ width:"100%", maxWidth:420 }}>
+                <ProductPreview />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Wave */}
@@ -482,12 +537,12 @@ const Home = () => {
       {/* ═══════════════════════════════════════════════════════════════════════
           STATS
       ══════════════════════════════════════════════════════════════════════════ */}
-      <section ref={statsRef} style={{ background:CREAM, padding:"88px 48px 96px" }}>
+      <section ref={statsRef} style={{ background:CREAM, padding: isMobile ? "56px 20px 64px" : "88px 48px 96px" }}>
         <div style={{ maxWidth:1000, margin:"0 auto" }}>
           <p style={{
             fontFamily:SERIF, fontSize:12, fontWeight:700, letterSpacing:"0.14em",
             color:"#94A3B8", textTransform:"uppercase", textAlign:"center",
-            marginBottom:64,
+            marginBottom: isMobile ? 40 : 64,
             animation: statsInView ? "fadeIn 0.6s ease both" : "none",
             opacity: statsInView ? undefined : 0,
           }}>
@@ -496,8 +551,8 @@ const Home = () => {
 
           <div style={{
             display:"grid",
-            gridTemplateColumns:"repeat(4,1fr)",
-            gap:0,
+            gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)",
+            gap: isMobile ? "32px 0" : 0,
           }}>
             {[
               { value:25,  suffix:"%",  label:"Average grade increase", delay:0   },
@@ -506,8 +561,10 @@ const Home = () => {
               { value:6,   suffix:" wk",label:"To see real results",      delay:360 },
             ].map((s, i, arr) => (
               <div key={s.label} style={{
-                textAlign:"center", padding:"0 24px",
-                borderRight: i < arr.length - 1 ? "1px solid #E2EBF0" : "none",
+                textAlign:"center", padding: isMobile ? "0 8px" : "0 24px",
+                borderRight: !isMobile && i < arr.length - 1 ? "1px solid #E2EBF0" : "none",
+                borderBottom: isMobile && i < 2 ? "1px solid #E2EBF0" : "none",
+                paddingBottom: isMobile && i < 2 ? 32 : 0,
               }}>
                 <StatCard {...s} start={statsInView} />
               </div>
@@ -519,9 +576,9 @@ const Home = () => {
       {/* ═══════════════════════════════════════════════════════════════════════
           FEATURES
       ══════════════════════════════════════════════════════════════════════════ */}
-      <section ref={featuresRef} style={{ background:"#fff", padding:"96px 48px" }}>
+      <section ref={featuresRef} style={{ background:"#fff", padding: isMobile ? "64px 20px" : "96px 48px" }}>
         <div style={{ maxWidth:1000, margin:"0 auto" }}>
-          <div style={{ textAlign:"center", marginBottom:60 }}>
+          <div style={{ textAlign:"center", marginBottom: isMobile ? 40 : 60 }}>
             <p style={{ fontFamily:SERIF, fontSize:12, fontWeight:700,
               color:BRAND, letterSpacing:"0.14em", textTransform:"uppercase",
               marginBottom:14,
@@ -540,7 +597,7 @@ const Home = () => {
             </h2>
           </div>
 
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20 }}>
+          <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : isTablet ? "1fr 1fr" : "repeat(3,1fr)", gap:20 }}>
             <Feature
               Icon={Exam} accent="#e8f7f9"
               title="Real past-paper questions"
@@ -566,9 +623,9 @@ const Home = () => {
       {/* ═══════════════════════════════════════════════════════════════════════
           HOW IT WORKS
       ══════════════════════════════════════════════════════════════════════════ */}
-      <section ref={stepsRef} style={{ background:CREAM, padding:"96px 48px" }}>
+      <section ref={stepsRef} style={{ background:CREAM, padding: isMobile ? "64px 20px" : "96px 48px" }}>
         <div style={{ maxWidth:1000, margin:"0 auto" }}>
-          <div style={{ textAlign:"center", marginBottom:60 }}>
+          <div style={{ textAlign:"center", marginBottom: isMobile ? 40 : 60 }}>
             <p style={{ fontFamily:SERIF, fontSize:12, fontWeight:700,
               color:BRAND, letterSpacing:"0.14em", textTransform:"uppercase",
               marginBottom:14,
@@ -586,7 +643,7 @@ const Home = () => {
             </h2>
           </div>
 
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20 }}>
+          <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)", gap:20 }}>
             <Step number="01" Icon={BookOpen} delay={0}   inView={stepsInView}
               title="Read the unit summary"
               body="Each topic is distilled into a concise, exam-focused summary. Read it once — grasp the essentials without wading through a textbook." />
@@ -603,7 +660,7 @@ const Home = () => {
       {/* ═══════════════════════════════════════════════════════════════════════
           EXAM TYPES
       ══════════════════════════════════════════════════════════════════════════ */}
-      <section style={{ background:"#fff", padding:"96px 48px" }}>
+      <section style={{ background:"#fff", padding: isMobile ? "64px 20px" : "96px 48px" }}>
         <div style={{ maxWidth:700, margin:"0 auto", textAlign:"center" }}>
           <h2 style={{
             fontFamily:SERIF, fontSize:"clamp(28px,3.5vw,44px)", fontWeight:700,
@@ -636,7 +693,7 @@ const Home = () => {
       ══════════════════════════════════════════════════════════════════════════ */}
       <section ref={ctaRef} style={{
         background:`linear-gradient(145deg, #021a1f 0%, ${DARK} 45%, ${BRAND} 100%)`,
-        padding:"120px 48px", textAlign:"center",
+        padding: isMobile ? "72px 20px" : "120px 48px", textAlign:"center",
         position:"relative", overflow:"hidden",
       }}>
         <div style={{ position:"absolute", inset:0, opacity:0.05,
@@ -692,8 +749,12 @@ const Home = () => {
       ══════════════════════════════════════════════════════════════════════════ */}
       <footer style={{
         background:"#021a1f",
-        padding:"28px 48px",
-        display:"flex", alignItems:"center", justifyContent:"space-between",
+        padding: isMobile ? "28px 20px" : "28px 48px",
+        display:"flex",
+        flexDirection: isMobile ? "column" : "row",
+        alignItems: isMobile ? "flex-start" : "center",
+        justifyContent:"space-between",
+        gap: isMobile ? 20 : 0,
         borderTop:"1px solid rgba(255,255,255,0.05)",
       }}>
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
@@ -702,7 +763,7 @@ const Home = () => {
           <span style={{ fontFamily:SCRIPT, fontSize:18,
             color:"rgba(255,255,255,0.3)" }}>edusupernova</span>
         </div>
-        <div style={{ display:"flex", gap:28 }}>
+        <div style={{ display:"flex", gap: isMobile ? 20 : 28, flexWrap:"wrap" }}>
           {["Contact", "About Us", "Terms", "Privacy"].map((l) => (
             <span key={l} style={{ fontFamily:SERIF, fontSize:12,
               color:"rgba(255,255,255,0.3)", cursor:"pointer",

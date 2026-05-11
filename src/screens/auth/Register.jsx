@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { ArrowRight } from "@phosphor-icons/react";
+import useWindowWidth from "../../hooks/useWindowWidth.js";
 import { GoogleLogin } from "@react-oauth/google";
 import { AuthApi } from "../../api/index.js";
 import useAuth from "../../hooks/useAuth.js";
@@ -26,12 +27,23 @@ const Spinner = () => (
 const RegisterScreen = () => {
   const navigate = useNavigate();
   const { saveSession } = useAuth();
+  const width = useWindowWidth();
+  const isMobile = width < 768;
+
+  // ── Step 1: registration form ─────────────────────────────────────────────
   const [username, setUsername] = useState("");
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
   const [confirm,  setConfirm]  = useState("");
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState("");
+
+  // ── Step 2: OTP verification ──────────────────────────────────────────────
+  const [step,         setStep]         = useState("form"); // "form" | "verify"
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [otp,          setOtp]          = useState("");
+  const [otpLoading,   setOtpLoading]   = useState(false);
+  const [otpError,     setOtpError]     = useState("");
 
   const handleRegister = async () => {
     setError("");
@@ -45,12 +57,25 @@ const RegisterScreen = () => {
     }
     setLoading(true);
     try {
-      const { data } = await AuthApi.register(username, email, password);
-      if (data.accessToken) { saveSession(data); navigate("/courses", { replace:true }); }
-      else navigate("/login");
+      await AuthApi.register(username, email, password);
+      setPendingEmail(email);
+      setStep("verify");
     } catch (err) {
       setError(err.message || "Server connection error.");
     } finally { setLoading(false); }
+  };
+
+  const handleVerify = async () => {
+    setOtpError("");
+    if (otp.length !== 6) { setOtpError("Please enter the full 6-digit code."); return; }
+    setOtpLoading(true);
+    try {
+      const { data } = await AuthApi.verifyEmail(pendingEmail, otp);
+      saveSession(data);
+      navigate("/courses", { replace: true });
+    } catch (err) {
+      setOtpError(err.message || "Invalid or expired code. Please try again.");
+    } finally { setOtpLoading(false); }
   };
 
   const handleKeyDown = e => { if (e.key === "Enter") handleRegister(); };
@@ -75,7 +100,7 @@ const RegisterScreen = () => {
   ];
 
   return (
-    <div style={{ display:"flex", minHeight:"100vh" }}>
+    <div style={{ display:"flex", flexDirection: isMobile ? "column" : "row", minHeight:"100vh" }}>
       <style>{`
         @keyframes rspin   { to { transform: rotate(360deg); } }
         @keyframes rfadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
@@ -97,9 +122,94 @@ const RegisterScreen = () => {
         flex:1, background:"#fff",
         display:"flex", flexDirection:"column",
         alignItems:"center", justifyContent:"center",
-        padding:"60px 64px",
+        padding: isMobile ? "36px 20px 48px" : "60px 64px",
       }}>
         <div style={{ width:"100%", maxWidth:400 }}>
+
+        {/* ── OTP verification step ── */}
+        {step === "verify" && (
+          <div style={{ animation:"rfadeUp 0.5s ease both" }}>
+            <div style={{
+              width:56, height:56, borderRadius:18,
+              background:"#e8f7f9",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:26, marginBottom:20,
+            }}>✉️</div>
+            <h2 style={{ fontFamily:SERIF, fontSize:26, fontWeight:700,
+              color:"#0F172A", marginBottom:8, letterSpacing:"-0.6px" }}>
+              Check your email
+            </h2>
+            <p style={{ fontFamily:SERIF, fontSize:14, color:"#64748B", marginBottom:32, lineHeight:1.7 }}>
+              We sent a 6-digit code to <strong style={{ color:"#0F172A" }}>{pendingEmail}</strong>.<br />
+              Enter it below to activate your account.
+            </p>
+
+            <input
+              className="r-field"
+              value={otp}
+              onChange={e => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              onKeyDown={e => { if (e.key === "Enter") handleVerify(); }}
+              placeholder="000000"
+              maxLength={6}
+              inputMode="numeric"
+              autoFocus
+              style={{
+                width:"100%", height:64,
+                background:"#F8FAFC",
+                border:`1.5px solid ${otpError ? "#fca5a5" : "#E2EBF0"}`,
+                borderRadius:14, padding:"0 20px",
+                fontFamily:SERIF, fontSize:32,
+                fontWeight:700, letterSpacing:14,
+                textAlign:"center", color:"#062f37",
+                outline:"none", boxSizing:"border-box",
+                marginBottom:12,
+                transition:"border-color 0.15s",
+              }}
+            />
+
+            {otpError && (
+              <p style={{ fontFamily:SERIF, fontSize:13, color:"#b02020",
+                marginBottom:12, display:"flex", alignItems:"center", gap:6 }}>
+                <span>⚠</span> {otpError}
+              </p>
+            )}
+
+            <button
+              className="r-btn-primary"
+              onClick={handleVerify}
+              disabled={otpLoading || otp.length < 6}
+              style={{
+                width:"100%", height:54,
+                background: (otpLoading || otp.length < 6) ? "#94A3B8" : MINT,
+                border:"none", borderRadius:14,
+                fontFamily:SERIF, fontSize:16, fontWeight:700,
+                color: (otpLoading || otp.length < 6) ? "#fff" : DARK,
+                cursor: (otpLoading || otp.length < 6) ? "not-allowed" : "pointer",
+                display:"flex", alignItems:"center",
+                justifyContent:"center", gap:8,
+                boxShadow: (otpLoading || otp.length < 6) ? "none" : "0 12px 40px rgba(93,202,165,0.35)",
+                marginBottom:16,
+              }}>
+              {otpLoading ? <Spinner /> : <> Verify & continue <ArrowRight size={18} weight="bold" /> </>}
+            </button>
+
+            <p style={{ fontFamily:SERIF, fontSize:13, color:"#94A3B8", textAlign:"center" }}>
+              Didn't receive it?{" "}
+              <span
+                onClick={async () => {
+                  setOtpError("");
+                  try { await AuthApi.register(username, email, password); }
+                  catch {}
+                }}
+                style={{ color:BRAND, cursor:"pointer", fontWeight:700 }}>
+                Resend code
+              </span>
+            </p>
+          </div>
+        )}
+
+        {/* ── Registration form (hidden once OTP step starts) ── */}
+        {step === "form" && <>
 
           <h2 style={{ fontFamily:SERIF, fontSize:30, fontWeight:700,
             color:"#0F172A", marginBottom:6, letterSpacing:"-0.8px" }}>
@@ -194,11 +304,13 @@ const RegisterScreen = () => {
             color:"#CBD5E1", textAlign:"center", marginTop:16 }}>
             Free forever · No credit card required
           </p>
+        </>}
+
         </div>
       </div>
 
-      {/* ── Right panel — dark brand ── */}
-      <div style={{
+      {/* ── Right panel — dark brand (hidden on mobile) ── */}
+      {!isMobile && <div style={{
         width:"44%", flexShrink:0,
         background:`linear-gradient(155deg, ${BRAND} 0%, ${DARK} 60%, #021a1f 100%)`,
         display:"flex", flexDirection:"column", justifyContent:"space-between",
@@ -272,7 +384,7 @@ const RegisterScreen = () => {
           position:"relative", zIndex:1 }}>
           © 2026 EduSupernova · Free forever
         </p>
-      </div>
+      </div>}
     </div>
   );
 };
