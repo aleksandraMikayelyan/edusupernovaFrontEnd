@@ -124,3 +124,4 @@ The app is deployed on Vercel. The `vercel.json` config handles SPA routing by r
 ```bash
 npm run lint
 ```
+.....
