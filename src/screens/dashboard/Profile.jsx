@@ -223,7 +223,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { username, userId, clearSession } = useAuth();
 
-  const handleLogout = () => { clearSession(); navigate("/login"); };
+  const handleLogout = () => { clearSession(); navigate("/"); };
 
   const [examProgress,    setExamProgress]    = useState([]);
   const [loading,         setLoading]         = useState(true);

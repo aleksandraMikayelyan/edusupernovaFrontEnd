@@ -369,7 +369,7 @@ const TestScreen = () => {
         </div>
         <div style={{ padding:"12px 8px 0", borderTop:"1px solid #F1F5F9" }}>
           <DrawerItem Icon={SignOut} label="Log out" danger
-            onClick={() => confirmLeave("/login")} />
+            onClick={() => confirmLeave("/")} />
         </div>
       </div>
 

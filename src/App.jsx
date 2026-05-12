@@ -36,13 +36,25 @@ import TestHistoryPage  from "./screens/dashboard/TestHistoryPage.jsx";
 // ── Admin screens ─────────────────────────────────────────────────────────────
 import AdminInterface from "./screens/admin/AdminInterface.jsx";
 
-// ─── Auth guard ───────────────────────────────────────────────────────────────
+// ─── Auth guards ──────────────────────────────────────────────────────────────
 
-const ProtectedRoute = ({ children, adminOnly = false }) => {
-  const { isAuthenticated, isAdmin } = useAuth();
+const ProtectedRoute = ({ children, adminOnly = false, studentOnly = false }) => {
+  const { isAuthenticated, isAdmin, isLoading } = useAuth();
 
+  if (isLoading) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (adminOnly && !isAdmin) return <Navigate to="/courses" replace />;
+  if (studentOnly && isAdmin) return <Navigate to="/admin" replace />;
+
+  return children;
+};
+
+// Redirects already-authenticated users away from public pages (/, /login, /register)
+const PublicOnlyRoute = ({ children }) => {
+  const { isAuthenticated, isAdmin, isLoading } = useAuth();
+
+  if (isLoading) return null;
+  if (isAuthenticated) return <Navigate to={isAdmin ? "/admin" : "/courses"} replace />;
 
   return children;
 };
@@ -52,18 +64,18 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
 const AppRoutes = () => (
   <Routes>
 
-    {/* ── Public ── */}
-    <Route path="/"         element={<Home />} />
-    <Route path="/login"    element={<LogIn />} />
-    <Route path="/register" element={<Register />} />
+    {/* ── Public (redirect to dashboard if already logged in) ── */}
+    <Route path="/"         element={<PublicOnlyRoute><Home /></PublicOnlyRoute>} />
+    <Route path="/login"    element={<PublicOnlyRoute><LogIn /></PublicOnlyRoute>} />
+    <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
 
-    {/* ── Student (protected) ── */}
-    <Route path="/courses"  element={<ProtectedRoute><UserInterface /></ProtectedRoute>} />
-    <Route path="/units"    element={<ProtectedRoute><Units /></ProtectedRoute>} />
-    <Route path="/test"     element={<ProtectedRoute><Test /></ProtectedRoute>} />
-    <Route path="/feedback" element={<ProtectedRoute><FeedbackPage /></ProtectedRoute>} />
-    <Route path="/profile"  element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-    <Route path="/history"  element={<ProtectedRoute><TestHistoryPage /></ProtectedRoute>} />
+    {/* ── Student (protected, admin blocked) ── */}
+    <Route path="/courses"  element={<ProtectedRoute studentOnly><UserInterface /></ProtectedRoute>} />
+    <Route path="/units"    element={<ProtectedRoute studentOnly><Units /></ProtectedRoute>} />
+    <Route path="/test"     element={<ProtectedRoute studentOnly><Test /></ProtectedRoute>} />
+    <Route path="/feedback" element={<ProtectedRoute studentOnly><FeedbackPage /></ProtectedRoute>} />
+    <Route path="/profile"  element={<ProtectedRoute studentOnly><Profile /></ProtectedRoute>} />
+    <Route path="/history"  element={<ProtectedRoute studentOnly><TestHistoryPage /></ProtectedRoute>} />
 
     {/* ── Admin (protected + role check) ── */}
     <Route path="/admin"    element={<ProtectedRoute adminOnly><AdminInterface /></ProtectedRoute>} />

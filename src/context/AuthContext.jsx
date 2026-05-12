@@ -1,40 +1,54 @@
-/**
- * context/AuthContext.jsx — In-memory auth state (no localStorage)
- *
- * Token is held in React state only.
- * Page refresh = logout (by design, per AuthResponse contract).
- *
- * Provides:
- *   isAuthenticated, isAdmin, userId, username, rol
- *   saveSession(authResponse)  — call with the full AuthResponse object after login/register
- *   clearSession()             — call on logout
- */
-
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { setAuthToken } from "../api/client.js";
+
+const SESSION_KEY = "edu_session";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [token,    setToken]    = useState(null);
-  const [userId,   setUserId]   = useState(null);
-  const [username, setUsername] = useState(null);
-  const [rol,      setRol]      = useState(null);
+  const [token,     setToken]     = useState(null);
+  const [userId,    setUserId]    = useState(null);
+  const [username,  setUsername]  = useState(null);
+  const [rol,       setRol]       = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const isAuthenticated = !!token;
   const isAdmin         = rol?.trim().toUpperCase() === "ADMIN";
 
-  /**
-   * Call this with the raw AuthResponse object from the backend.
-   * Reads: accessToken, rol, user.id, user.username
-   */
+  // Rehydrate session from sessionStorage on every page load / refresh
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(SESSION_KEY);
+      if (saved) {
+        const { accessToken, rol: userRol, userId: uid, username: uname } = JSON.parse(saved);
+        if (accessToken) {
+          setToken(accessToken);
+          setRol(userRol ?? "STUDENT");
+          setUserId(uid ?? null);
+          setUsername(uname ?? null);
+          setAuthToken(accessToken);
+        }
+      }
+    } catch {
+      sessionStorage.removeItem(SESSION_KEY);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const saveSession = useCallback((authResponse) => {
     const { accessToken, rol: userRol, user } = authResponse;
     setToken(accessToken);
     setRol(userRol ?? "STUDENT");
     setUserId(user?.id   ?? null);
     setUsername(user?.username ?? null);
-    setAuthToken(accessToken);   // tell axios interceptor
+    setAuthToken(accessToken);
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+      accessToken,
+      rol:      userRol      ?? "STUDENT",
+      userId:   user?.id     ?? null,
+      username: user?.username ?? null,
+    }));
   }, []);
 
   const clearSession = useCallback(() => {
@@ -43,12 +57,14 @@ export const AuthProvider = ({ children }) => {
     setUserId(null);
     setUsername(null);
     setAuthToken(null);
+    sessionStorage.removeItem(SESSION_KEY);
   }, []);
 
   return (
     <AuthContext.Provider value={{
       isAuthenticated,
       isAdmin,
+      isLoading,
       token,
       userId,
       username,
