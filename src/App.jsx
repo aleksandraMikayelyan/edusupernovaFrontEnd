@@ -18,6 +18,7 @@
 
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.jsx";
+import LoadingScreen from "./components/common/LoadingScreen.jsx";
 import useAuth from "./hooks/useAuth.js";
 
 // ── Public screens ────────────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ import AdminInterface from "./screens/admin/AdminInterface.jsx";
 const ProtectedRoute = ({ children, adminOnly = false, studentOnly = false }) => {
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
 
-  if (isLoading) return null;
+  if (isLoading) return <LoadingScreen />;  // ← was: return null
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (adminOnly && !isAdmin) return <Navigate to="/courses" replace />;
   if (studentOnly && isAdmin) return <Navigate to="/admin" replace />;
@@ -49,11 +50,10 @@ const ProtectedRoute = ({ children, adminOnly = false, studentOnly = false }) =>
   return children;
 };
 
-// Redirects already-authenticated users away from public pages (/, /login, /register)
 const PublicOnlyRoute = ({ children }) => {
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
 
-  if (isLoading) return null;
+  if (isLoading) return <LoadingScreen />;  // ← was: return null
   if (isAuthenticated) return <Navigate to={isAdmin ? "/admin" : "/courses"} replace />;
 
   return children;

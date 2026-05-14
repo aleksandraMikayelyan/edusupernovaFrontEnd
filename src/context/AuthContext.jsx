@@ -15,50 +15,49 @@ export const AuthProvider = ({ children }) => {
   const isAuthenticated = !!token;
   const isAdmin         = rol?.trim().toUpperCase() === "ADMIN";
 
-  // Rehydrate session from sessionStorage on every page load / refresh
-  useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem(SESSION_KEY);
-      if (saved) {
-        const { accessToken, rol: userRol, userId: uid, username: uname } = JSON.parse(saved);
-        if (accessToken) {
-          setToken(accessToken);
-          setRol(userRol ?? "STUDENT");
-          setUserId(uid ?? null);
-          setUsername(uname ?? null);
-          setAuthToken(accessToken);
-        }
+ useEffect(() => {
+  try {
+    const saved = localStorage.getItem(SESSION_KEY);  // ← changed
+    if (saved) {
+      const { accessToken, rol: userRol, userId: uid, username: uname } = JSON.parse(saved);
+      if (accessToken) {
+        setToken(accessToken);
+        setRol(userRol ?? "STUDENT");
+        setUserId(uid ?? null);
+        setUsername(uname ?? null);
+        setAuthToken(accessToken);
       }
-    } catch {
-      sessionStorage.removeItem(SESSION_KEY);
-    } finally {
-      setIsLoading(false);
     }
-  }, []);
+  } catch {
+    localStorage.removeItem(SESSION_KEY);  // ← changed
+  } finally {
+    setIsLoading(false);
+  }
+}, []);
 
-  const saveSession = useCallback((authResponse) => {
-    const { accessToken, rol: userRol, user } = authResponse;
-    setToken(accessToken);
-    setRol(userRol ?? "STUDENT");
-    setUserId(user?.id   ?? null);
-    setUsername(user?.username ?? null);
-    setAuthToken(accessToken);
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
-      accessToken,
-      rol:      userRol      ?? "STUDENT",
-      userId:   user?.id     ?? null,
-      username: user?.username ?? null,
-    }));
-  }, []);
+const saveSession = useCallback((authResponse) => {
+  const { accessToken, rol: userRol, user } = authResponse;
+  setToken(accessToken);
+  setRol(userRol ?? "STUDENT");
+  setUserId(user?.id   ?? null);
+  setUsername(user?.username ?? null);
+  setAuthToken(accessToken);
+  localStorage.setItem(SESSION_KEY, JSON.stringify({  // ← changed
+    accessToken,
+    rol:      userRol      ?? "STUDENT",
+    userId:   user?.id     ?? null,
+    username: user?.username ?? null,
+  }));
+}, []);
 
-  const clearSession = useCallback(() => {
-    setToken(null);
-    setRol(null);
-    setUserId(null);
-    setUsername(null);
-    setAuthToken(null);
-    sessionStorage.removeItem(SESSION_KEY);
-  }, []);
+const clearSession = useCallback(() => {
+  setToken(null);
+  setRol(null);
+  setUserId(null);
+  setUsername(null);
+  setAuthToken(null);
+  localStorage.removeItem(SESSION_KEY);  // ← changed
+}, []);
 
   return (
     <AuthContext.Provider value={{
