@@ -38,6 +38,7 @@ import IELTSReadingTest      from "../ielts/IELTSReadingTest.jsx";
 import IELTSWritingTest      from "../ielts/IELTSWritingTest.jsx";
 import IELTSSpeakingTest     from "../ielts/IELTSSpeakingTest.jsx";
 import useAutosave           from "../../hooks/useAutosave.js";
+import Math                  from "../../components/test/mathParser.jsx";
 
 const DARK  = "#062f37";
 const BRAND = "#0a5f6e";
@@ -405,11 +406,11 @@ const TestScreen = () => {
             </div>
 
             {/* Question text */}
-            <p style={{ fontFamily:SERIF, fontSize:21, lineHeight:1.65,
+             <div style={{ fontFamily:SERIF, fontSize:21, lineHeight:1.65,
               color:"#0F172A", marginBottom:32, letterSpacing:"-0.2px",
               fontWeight:500 }}>
-              {question.questionText}
-            </p>
+              <Math>{question.questionText}</Math>
+            </div>
 
             {/* ── Answer input ── */}
             {isEssay ? (
@@ -498,7 +499,7 @@ const TestScreen = () => {
                         fontWeight: selected ? 600 : 400,
                         transition:"color 0.18s",
                       }}>
-                        {opt}
+                        <Math inline>{opt}</Math>
                       </span>
                     </button>
                   );
