@@ -50,8 +50,8 @@ client.interceptors.response.use(
 
     if (err.response?.status === 401) {
       _token = null;
-      sessionStorage.removeItem("edu_session");
-      window.location.href = "/login";
+      localStorage.removeItem("edu_session");
+      window.location.href = "/";
     }
 
     // Re-throw as a plain Error so components just use err.message

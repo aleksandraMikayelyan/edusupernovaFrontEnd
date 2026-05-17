@@ -106,11 +106,26 @@ const EssayCard = ({ q, index, testId, answer, onChange, isActive, onFocus }) =>
   );
 };
 
+// ── Group questions by groupId (preserves question order within each group) ────
+function buildGroups(questions) {
+  const map = new Map();
+  for (const q of questions) {
+    const key = q.groupId != null ? q.groupId : `solo-${q.quizId}`;
+    if (!map.has(key)) map.set(key, { groupId: key, contextText: q.contextText, qs: [] });
+    map.get(key).qs.push(q);
+  }
+  return [...map.values()];
+}
+
+const TEXT_LABELS = ["A", "B", "C", "D", "E"]; // Cambridge label order
+
 // ── Reference text panel (left) ───────────────────────────────────────────────
 
-const ReferencePanel = ({ questions, activeIndex, onSelect }) => {
-  const active = questions[activeIndex];
+const ReferencePanel = ({ groups, activeGroupIndex, onSelect }) => {
+  if (!groups.length) return null;
+  const active = groups[activeGroupIndex] ?? groups[0];
   const hasText = !!active?.contextText;
+  const label   = TEXT_LABELS[activeGroupIndex] ?? `${activeGroupIndex + 1}`;
 
   return (
     <div style={{
@@ -118,26 +133,26 @@ const ReferencePanel = ({ questions, activeIndex, onSelect }) => {
       height: "100%", background: CREAM,
       borderRight: "1px solid #E2EBF0",
     }}>
-      {/* Tab bar */}
+      {/* Tab bar — one tab per passage group */}
       <div style={{
         display: "flex", borderBottom: "1px solid #E2EBF0",
         background: "#fff", flexShrink: 0, overflowX: "auto",
       }}>
-        {questions.map((q, i) => (
+        {groups.map((g, i) => (
           <button
-            key={q.quizId}
+            key={g.groupId}
             onClick={() => onSelect(i)}
             style={{
               flex: "0 0 auto", padding: "12px 20px",
               border: "none", background: "none", cursor: "pointer",
               fontFamily: SERIF, fontSize: 12, fontWeight: 700,
-              color: activeIndex === i ? BRAND : "#94A3B8",
-              borderBottom: `2px solid ${activeIndex === i ? BRAND : "transparent"}`,
+              color: activeGroupIndex === i ? BRAND : "#94A3B8",
+              borderBottom: `2px solid ${activeGroupIndex === i ? BRAND : "transparent"}`,
               transition: "color 0.15s, border-color 0.15s",
               whiteSpace: "nowrap",
             }}
           >
-            Text {i + 1}
+            Text {TEXT_LABELS[i] ?? i + 1}
           </button>
         ))}
       </div>
@@ -151,7 +166,7 @@ const ReferencePanel = ({ questions, activeIndex, onSelect }) => {
               color: "#94A3B8", letterSpacing: "0.14em",
               textTransform: "uppercase", marginBottom: 16,
             }}>
-              Reference text — Question {activeIndex + 1}
+              Reference text — Text {label}
             </p>
             <div style={{
               fontFamily: SERIF, fontSize: 15, lineHeight: 1.85,
@@ -167,7 +182,7 @@ const ReferencePanel = ({ questions, activeIndex, onSelect }) => {
             height: "100%", gap: 12, opacity: 0.5,
           }}>
             <p style={{ fontFamily: SERIF, fontSize: 14, color: "#64748B", textAlign: "center" }}>
-              No reference text for Question {activeIndex + 1}.
+              No reference text for Text {label}.
             </p>
           </div>
         )}
@@ -213,8 +228,9 @@ const ReadingWritingTest = ({ session }) => {
   const testId   = session.testId;
 
   const [questions,    setQuestions]    = useState([]);
+  const [groups,       setGroups]       = useState([]);        // passage groups
   const [answers,      setAnswers]      = useState({});       // quizId → string
-  const [activeRef,    setActiveRef]    = useState(0);        // which text tab is shown
+  const [activeRef,    setActiveRef]    = useState(0);        // which group tab is shown
   const [loading,      setLoading]      = useState(true);
   const [submitting,   setSubmitting]   = useState(false);
   const [activeEssay,  setActiveEssay]  = useState(0);        // highlights active card
@@ -235,6 +251,7 @@ const ReadingWritingTest = ({ session }) => {
           (a, b) => (a.questionNumber ?? 0) - (b.questionNumber ?? 0)
         );
         setQuestions(sorted);
+        setGroups(buildGroups(sorted));
         const saved = {};
         res.data.forEach(q => { if (q.userResponse) saved[q.quizId] = q.userResponse; });
         setAnswers(saved);
@@ -247,12 +264,16 @@ const ReadingWritingTest = ({ session }) => {
     setAnswers(prev => ({ ...prev, [quizId]: value }));
   }, []);
 
-  // When user focuses an essay card, sync the reference text tab to match
+  // When user focuses an essay card, sync the reference text tab to that question's group
   const handleEssayFocus = useCallback((index) => {
     setActiveEssay(index);
-    setActiveRef(index);       // keep text and essay in sync
-    setActiveTab("text");      // mobile: hint user to switch to Text if needed
-  }, []);
+    setActiveTab("text");
+    if (groups.length > 0 && questions[index]) {
+      const quizId = questions[index].quizId;
+      const gi = groups.findIndex(g => g.qs.some(q => q.quizId === quizId));
+      if (gi >= 0) setActiveRef(gi);
+    }
+  }, [groups, questions]);
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -332,9 +353,9 @@ const ReadingWritingTest = ({ session }) => {
             overflow: "hidden",
           }}>
             <ReferencePanel
-              questions={questions}
-              activeIndex={activeRef}
-              onSelect={i => { setActiveRef(i); setActiveEssay(i); }}
+              groups={groups}
+              activeGroupIndex={activeRef}
+              onSelect={i => setActiveRef(i)}
             />
           </div>
         )}
