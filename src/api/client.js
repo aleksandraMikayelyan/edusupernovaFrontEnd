@@ -48,7 +48,8 @@ client.interceptors.response.use(
       err.response?.data?.error   ||
       (err.response ? `Server error ${err.response.status}` : "Network error");
 
-    if (err.response?.status === 401) {
+    if (err.response?.status === 401 && _token) {
+      // Only redirect when an authenticated session expires, not on a failed login attempt
       _token = null;
       localStorage.removeItem("edu_session");
       window.location.href = "/";

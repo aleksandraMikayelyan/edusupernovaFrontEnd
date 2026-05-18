@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { setAuthToken } from "../api/client.js";
 
-const SESSION_KEY = "edu_session";
+const SESSION_KEY      = "edu_session";
+const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in ms
 
 const AuthContext = createContext(null);
 
@@ -17,10 +18,12 @@ export const AuthProvider = ({ children }) => {
 
  useEffect(() => {
   try {
-    const saved = localStorage.getItem(SESSION_KEY);  // ← changed
+    const saved = localStorage.getItem(SESSION_KEY);
     if (saved) {
-      const { accessToken, rol: userRol, userId: uid, username: uname } = JSON.parse(saved);
-      if (accessToken) {
+      const { accessToken, rol: userRol, userId: uid, username: uname, loginAt } = JSON.parse(saved);
+      if (loginAt && Date.now() - loginAt > SESSION_DURATION) {
+        localStorage.removeItem(SESSION_KEY);
+      } else if (accessToken) {
         setToken(accessToken);
         setRol(userRol ?? "STUDENT");
         setUserId(uid ?? null);
@@ -29,7 +32,7 @@ export const AuthProvider = ({ children }) => {
       }
     }
   } catch {
-    localStorage.removeItem(SESSION_KEY);  // ← changed
+    localStorage.removeItem(SESSION_KEY);
   } finally {
     setIsLoading(false);
   }
@@ -42,11 +45,12 @@ const saveSession = useCallback((authResponse) => {
   setUserId(user?.id   ?? null);
   setUsername(user?.username ?? null);
   setAuthToken(accessToken);
-  localStorage.setItem(SESSION_KEY, JSON.stringify({  // ← changed
+  localStorage.setItem(SESSION_KEY, JSON.stringify({
     accessToken,
-    rol:      userRol      ?? "STUDENT",
-    userId:   user?.id     ?? null,
+    rol:      userRol        ?? "STUDENT",
+    userId:   user?.id       ?? null,
     username: user?.username ?? null,
+    loginAt:  Date.now(),
   }));
 }, []);
 
