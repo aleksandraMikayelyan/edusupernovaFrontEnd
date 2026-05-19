@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowRight } from "@phosphor-icons/react";
+import { ArrowRight, Eye, EyeSlash } from "@phosphor-icons/react";
 import useWindowWidth from "../../hooks/useWindowWidth.js";
 import { GoogleLogin } from "@react-oauth/google";
 import { AuthApi } from "../../api/index.js";
@@ -29,15 +29,20 @@ const LoginScreen = () => {
   const { saveSession } = useAuth();
   const width = useWindowWidth();
   const isMobile = width < 768;
-  const [email,    setEmail]    = useState("");
-  const [password, setPassword] = useState("");
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState("");
+  const [email,        setEmail]       = useState("");
+  const [password,     setPassword]    = useState("");
+  const [loading,      setLoading]     = useState(false);
+  const [error,        setError]       = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
     setError("");
     if (!email.trim() || !password.trim()) {
       setError("Please enter your email and password.");
+      return;
+    }
+    if (!email.includes("@")) {
+      setError("That looks like a username, not an email. Please enter your email address (e.g. you@example.com).");
       return;
     }
     setLoading(true);
@@ -48,9 +53,9 @@ const LoginScreen = () => {
       navigate(data.rol?.trim().toUpperCase() === "ADMIN" ? "/admin" : "/courses", { replace: true });
     } catch (err) {
       const s = err.status;
-      if (s === 401 || s === 403) setError("Incorrect email or password.");
-      else if (s) setError(err.message || `Server error ${s}.`);
-      else setError("Connection error. Is the backend running?");
+      if (s === 401 || s === 403) setError("Incorrect email or password — please try again.");
+      else if (s) setError(err.message || `Server error ${s}. Please try again.`);
+      else setError("Could not reach the server. Please wait a moment and try again.");
     } finally { setLoading(false); }
   };
 
@@ -206,29 +211,59 @@ const LoginScreen = () => {
           )}
 
           <div style={{ display:"flex", flexDirection:"column", gap:14, marginBottom:28 }}>
-            {[
-              { type:"email",    placeholder:"Email address",  value:email,    onChange:e=>setEmail(e.target.value),    autoComplete:"email"            },
-              { type:"password", placeholder:"Password",       value:password, onChange:e=>setPassword(e.target.value), autoComplete:"current-password" },
-            ].map(({ type, placeholder, value, onChange, autoComplete }) => (
-              <input key={type}
+            {/* Email field */}
+            <input
+              className="l-field"
+              type="email"
+              placeholder="Email address"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              onKeyDown={handleKeyDown}
+              autoComplete="email"
+              style={{
+                width:"100%", height:54,
+                background:"#F8FAFC",
+                border:"1.5px solid #E2EBF0",
+                borderRadius:14, padding:"0 20px",
+                fontFamily:SERIF, fontSize:15, color:"#0F172A",
+                outline:"none", boxSizing:"border-box",
+                transition:"border-color 0.15s, box-shadow 0.15s",
+              }}
+            />
+            {/* Password field with show/hide toggle */}
+            <div style={{ position:"relative" }}>
+              <input
                 className="l-field"
-                type={type}
-                placeholder={placeholder}
-                value={value}
-                onChange={onChange}
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
                 onKeyDown={handleKeyDown}
-                autoComplete={autoComplete}
+                autoComplete="current-password"
                 style={{
                   width:"100%", height:54,
                   background:"#F8FAFC",
                   border:"1.5px solid #E2EBF0",
-                  borderRadius:14, padding:"0 20px",
+                  borderRadius:14, padding:"0 48px 0 20px",
                   fontFamily:SERIF, fontSize:15, color:"#0F172A",
                   outline:"none", boxSizing:"border-box",
                   transition:"border-color 0.15s, box-shadow 0.15s",
                 }}
               />
-            ))}
+              <button
+                type="button"
+                onClick={() => setShowPassword(v => !v)}
+                style={{
+                  position:"absolute", right:14, top:"50%",
+                  transform:"translateY(-50%)",
+                  background:"none", border:"none",
+                  cursor:"pointer", padding:0,
+                  display:"flex", color:"#94A3B8",
+                  lineHeight:0,
+                }}>
+                {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button

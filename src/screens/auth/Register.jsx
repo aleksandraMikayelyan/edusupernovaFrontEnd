@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowRight } from "@phosphor-icons/react";
+import { ArrowRight, Eye, EyeSlash } from "@phosphor-icons/react";
 import useWindowWidth from "../../hooks/useWindowWidth.js";
 import { GoogleLogin } from "@react-oauth/google";
 import { AuthApi } from "../../api/index.js";
@@ -35,8 +35,10 @@ const RegisterScreen = () => {
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
   const [confirm,  setConfirm]  = useState("");
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState("");
+  const [loading,      setLoading]     = useState(false);
+  const [error,        setError]       = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm,  setShowConfirm]  = useState(false);
 
   // ── Step 2: OTP verification ──────────────────────────────────────────────
   const [step,         setStep]         = useState("form"); // "form" | "verify"
@@ -49,6 +51,10 @@ const RegisterScreen = () => {
     setError("");
     if (!username.trim() || !email.trim() || !password.trim()) {
       setError("All fields are required.");
+      return;
+    }
+    if (!email.includes("@")) {
+      setError("Please enter a valid email address (e.g. you@example.com).");
       return;
     }
     if (password !== confirm) {
@@ -92,12 +98,15 @@ const RegisterScreen = () => {
     } finally { setLoading(false); }
   };
 
-  const fields = [
-    { type:"text",     placeholder:"Username",         value:username, onChange:e=>setUsername(e.target.value),  autoComplete:"username"      },
-    { type:"email",    placeholder:"Email address",    value:email,    onChange:e=>setEmail(e.target.value),     autoComplete:"email"         },
-    { type:"password", placeholder:"Password",         value:password, onChange:e=>setPassword(e.target.value),  autoComplete:"new-password"  },
-    { type:"password", placeholder:"Confirm password", value:confirm,  onChange:e=>setConfirm(e.target.value),   autoComplete:"new-password"  },
-  ];
+  const baseFieldStyle = {
+    width:"100%", height:52,
+    background:"#F8FAFC",
+    border:"1.5px solid #E2EBF0",
+    borderRadius:14,
+    fontFamily:SERIF, fontSize:15, color:"#0F172A",
+    outline:"none", boxSizing:"border-box",
+    transition:"border-color 0.15s, box-shadow 0.15s",
+  };
 
   return (
     <div style={{ display:"flex", flexDirection: isMobile ? "column" : "row", minHeight:"100vh" }}>
@@ -139,10 +148,23 @@ const RegisterScreen = () => {
               color:"#0F172A", marginBottom:8, letterSpacing:"-0.6px" }}>
               Check your email
             </h2>
-            <p style={{ fontFamily:SERIF, fontSize:14, color:"#64748B", marginBottom:32, lineHeight:1.7 }}>
+            <p style={{ fontFamily:SERIF, fontSize:14, color:"#64748B", marginBottom:16, lineHeight:1.7 }}>
               We sent a 6-digit code to <strong style={{ color:"#0F172A" }}>{pendingEmail}</strong>.<br />
               Enter it below to activate your account.
             </p>
+
+            {/* Render free-tier email delay warning */}
+            <div style={{
+              background:"#fffbeb", border:"1px solid #fcd34d",
+              borderRadius:12, padding:"12px 16px", marginBottom:24,
+              display:"flex", gap:10, alignItems:"flex-start",
+            }}>
+              <span style={{ fontSize:16, flexShrink:0, marginTop:1 }}>⚠️</span>
+              <p style={{ fontFamily:SERIF, fontSize:13, color:"#92400e", lineHeight:1.65, margin:0 }}>
+                <strong>Email may take a few minutes to arrive</strong> — and some providers may filter it as spam.
+                Please check your spam/junk folder. If you still don't see it after 2–3 minutes, tap <em>Resend code</em> below.
+              </p>
+            </div>
 
             <input
               className="r-field"
@@ -237,26 +259,42 @@ const RegisterScreen = () => {
           )}
 
           <div style={{ display:"flex", flexDirection:"column", gap:12, marginBottom:24 }}>
-            {fields.map(({ type, placeholder, value, onChange, autoComplete }) => (
-              <input key={placeholder}
-                className="r-field"
-                type={type}
-                placeholder={placeholder}
-                value={value}
-                onChange={onChange}
-                onKeyDown={handleKeyDown}
-                autoComplete={autoComplete}
-                style={{
-                  width:"100%", height:52,
-                  background:"#F8FAFC",
-                  border:"1.5px solid #E2EBF0",
-                  borderRadius:14, padding:"0 20px",
-                  fontFamily:SERIF, fontSize:15, color:"#0F172A",
-                  outline:"none", boxSizing:"border-box",
-                  transition:"border-color 0.15s, box-shadow 0.15s",
-                }}
-              />
-            ))}
+            <input className="r-field" type="text" placeholder="Username"
+              value={username} onChange={e=>setUsername(e.target.value)}
+              onKeyDown={handleKeyDown} autoComplete="username"
+              style={{ ...baseFieldStyle, padding:"0 20px" }} />
+            <input className="r-field" type="email" placeholder="Email address"
+              value={email} onChange={e=>setEmail(e.target.value)}
+              onKeyDown={handleKeyDown} autoComplete="email"
+              style={{ ...baseFieldStyle, padding:"0 20px" }} />
+            {/* Password with toggle */}
+            <div style={{ position:"relative" }}>
+              <input className="r-field"
+                type={showPassword ? "text" : "password"} placeholder="Password"
+                value={password} onChange={e=>setPassword(e.target.value)}
+                onKeyDown={handleKeyDown} autoComplete="new-password"
+                style={{ ...baseFieldStyle, padding:"0 48px 0 20px" }} />
+              <button type="button" onClick={() => setShowPassword(v=>!v)}
+                style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)",
+                  background:"none", border:"none", cursor:"pointer", padding:0,
+                  display:"flex", color:"#94A3B8", lineHeight:0 }}>
+                {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {/* Confirm password with toggle */}
+            <div style={{ position:"relative" }}>
+              <input className="r-field"
+                type={showConfirm ? "text" : "password"} placeholder="Confirm password"
+                value={confirm} onChange={e=>setConfirm(e.target.value)}
+                onKeyDown={handleKeyDown} autoComplete="new-password"
+                style={{ ...baseFieldStyle, padding:"0 48px 0 20px" }} />
+              <button type="button" onClick={() => setShowConfirm(v=>!v)}
+                style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)",
+                  background:"none", border:"none", cursor:"pointer", padding:0,
+                  display:"flex", color:"#94A3B8", lineHeight:0 }}>
+                {showConfirm ? <EyeSlash size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button
