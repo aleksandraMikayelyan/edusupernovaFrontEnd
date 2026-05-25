@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [token,     setToken]     = useState(null);
   const [userId,    setUserId]    = useState(null);
   const [username,  setUsername]  = useState(null);
+  const [email,     setEmail]     = useState(null);
   const [rol,       setRol]       = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -20,7 +21,7 @@ export const AuthProvider = ({ children }) => {
   try {
     const saved = localStorage.getItem(SESSION_KEY);
     if (saved) {
-      const { accessToken, rol: userRol, userId: uid, username: uname, loginAt } = JSON.parse(saved);
+      const { accessToken, rol: userRol, userId: uid, username: uname, email: storedEmail, loginAt } = JSON.parse(saved);
       if (loginAt && Date.now() - loginAt > SESSION_DURATION) {
         localStorage.removeItem(SESSION_KEY);
       } else if (accessToken) {
@@ -28,6 +29,7 @@ export const AuthProvider = ({ children }) => {
         setRol(userRol ?? "STUDENT");
         setUserId(uid ?? null);
         setUsername(uname ?? null);
+        setEmail(storedEmail ?? null);
         setAuthToken(accessToken);
       }
     }
@@ -42,14 +44,16 @@ const saveSession = useCallback((authResponse) => {
   const { accessToken, rol: userRol, user } = authResponse;
   setToken(accessToken);
   setRol(userRol ?? "STUDENT");
-  setUserId(user?.id   ?? null);
+  setUserId(user?.id       ?? null);
   setUsername(user?.username ?? null);
+  setEmail(user?.email     ?? null);
   setAuthToken(accessToken);
   localStorage.setItem(SESSION_KEY, JSON.stringify({
     accessToken,
-    rol:      userRol        ?? "STUDENT",
-    userId:   user?.id       ?? null,
-    username: user?.username ?? null,
+    rol:      userRol          ?? "STUDENT",
+    userId:   user?.id         ?? null,
+    username: user?.username   ?? null,
+    email:    user?.email      ?? null,
     loginAt:  Date.now(),
   }));
 }, []);
@@ -59,6 +63,7 @@ const clearSession = useCallback(() => {
   setRol(null);
   setUserId(null);
   setUsername(null);
+  setEmail(null);
   setAuthToken(null);
   localStorage.removeItem(SESSION_KEY);  // ← changed
 }, []);
@@ -71,6 +76,7 @@ const clearSession = useCallback(() => {
       token,
       userId,
       username,
+      email,
       rol,
       saveSession,
       clearSession,

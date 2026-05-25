@@ -40,6 +40,17 @@ export const AuthApi = {
   googleAuth: (token)                   => client.post("/users/google-auth", { idToken: token }),
 };
 
+// ── User profile management ───────────────────────────────────────────────────
+
+export const UserApi = {
+  /** Update username and/or email. Returns new AuthResponse with fresh JWT. */
+  updateProfile:  (username, email)                   => client.put("/users/profile",  { username, email }),
+  /** Change password. currentPassword is verified server-side. Returns MessageResponse. */
+  updatePassword: (currentPassword, newPassword)      => client.put("/users/password", { currentPassword, newPassword }),
+  /** Permanently delete the authenticated user's account. Returns MessageResponse. */
+  deleteAccount:  ()                                  => client.delete("/users/account"),
+};
+
 // ── Courses / Exams ───────────────────────────────────────────────────────────
 
 export const CoursesApi = {
