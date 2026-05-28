@@ -22,11 +22,64 @@ const SCRIPT= "Cookie, cursive";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-
 const calcReadingTime = (text) => {
   if (!text) return "1 min read";
   const words = text.trim().split(/\s+/).length;
   return `${Math.max(1, Math.round(words / 200))} min read`;
+};
+
+const getPaperLabel = (examType, format, courseName) => {
+  const exam   = (examType ?? "").toUpperCase().replace(/[\s_-]/g, "");
+  const course = (courseName ?? "").toLowerCase();
+
+  if (exam === "IELTS") {
+    if (format === "ESSAY" || format === "MULTI_ESSAY") {
+      if (course.includes("task 1") && course.includes("general")) return "Writing Task 1 General";
+      if (course.includes("task 1")) return "Writing Task 1 Academic";
+      if (course.includes("task 2")) return "Writing Task 2";
+      return "IELTS Writing";
+    }
+    if (format === "READING")   return "Academic Reading";
+    if (format === "LISTENING") return "Listening Section";
+    if (format === "SPEAKING")  return "Speaking Parts 1–3";
+    if (format === "MCQ")       return "Practice Questions";
+  }
+
+  if (exam === "TOEFL") {
+    if (format === "WRITING" || format === "ESSAY") {
+      if (course.includes("independent")) return "Independent Writing";
+      return "Integrated Writing";
+    }
+    if (format === "MULTI_ESSAY") return "Independent Writing";
+    if (format === "READING")     return "Reading Section";
+    if (format === "LISTENING")   return "Listening Section";
+    if (format === "SPEAKING")    return "Speaking Section";
+    if (format === "MCQ")         return "Practice Questions";
+  }
+
+  if (exam === "SAT") {
+    if (format === "READING_WRITING") return "Reading & Writing Module";
+    if (format === "MCQ")             return "Math Module";
+  }
+
+  if (exam === "ACT") {
+    if (format === "MCQ")             return `ACT ${courseName ?? "Section"}`;
+    if (format === "READING")         return "ACT Reading";
+    if (format === "READING_WRITING") return "ACT English";
+  }
+
+  // A Level / AS Level / generic fallback
+  const fallback = {
+    MCQ:              "Check your knowledge",
+    DATA_RESPONSE:    "Data response",
+    ESSAY:            "Practice essay",
+    MULTI_ESSAY:      "Multi-essay",
+    READING_WRITING:  "Reading & Writing",
+    READING:          "Reading Practice",
+    LISTENING:        "Listening Practice",
+    SPEAKING:         "Speaking Practice",
+  };
+  return fallback[format] ?? "Practice";
 };
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -341,7 +394,8 @@ const UnitScreen = () => {
                 }}
               >
                 <CheckCircle size={16} weight="bold" />
-                Check your knowledge
+                {getPaperLabel(examType, "MCQ", courseData?.courseName)}
+                {mcqPaper.timeLimitMinutes ? ` · ${mcqPaper.timeLimitMinutes} min` : ""}
               </button>
             )}
 
@@ -371,7 +425,8 @@ const UnitScreen = () => {
                 }}
               >
                 <ListBullets size={16} weight="bold" />
-                Data response · {dataResponsePaper.timeLimitMinutes} min
+                {getPaperLabel(examType, "DATA_RESPONSE", courseData?.courseName)}
+                {dataResponsePaper.timeLimitMinutes ? ` · ${dataResponsePaper.timeLimitMinutes} min` : ""}
               </button>
             )}
 
@@ -401,7 +456,8 @@ const UnitScreen = () => {
                 }}
               >
                 <NotePencil size={16} weight="bold" />
-                Practice essay · {essayPaper.timeLimitMinutes} min
+                {getPaperLabel(examType, "ESSAY", courseData?.courseName)}
+                {essayPaper.timeLimitMinutes ? ` · ${essayPaper.timeLimitMinutes} min` : ""}
               </button>
             )}
 
@@ -431,7 +487,8 @@ const UnitScreen = () => {
                 }}
               >
                 <ListBullets size={16} weight="bold" />
-                Reading &amp; Writing · {readingWritingPaper.timeLimitMinutes} min
+                {getPaperLabel(examType, "READING_WRITING", courseData?.courseName)}
+                {readingWritingPaper.timeLimitMinutes ? ` · ${readingWritingPaper.timeLimitMinutes} min` : ""}
               </button>
             )}
 
@@ -459,7 +516,8 @@ const UnitScreen = () => {
                 }}
               >
                 <CheckCircle size={16} weight="bold" />
-                Reading Practice · {readingPaper.timeLimitMinutes} min
+                {getPaperLabel(examType, "READING", courseData?.courseName)}
+                {readingPaper.timeLimitMinutes ? ` · ${readingPaper.timeLimitMinutes} min` : ""}
               </button>
             )}
 
@@ -489,7 +547,8 @@ const UnitScreen = () => {
                 }}
               >
                 <ListBullets size={16} weight="bold" />
-                Listening Practice · {listeningPaper.timeLimitMinutes} min
+                {getPaperLabel(examType, "LISTENING", courseData?.courseName)}
+                {listeningPaper.timeLimitMinutes ? ` · ${listeningPaper.timeLimitMinutes} min` : ""}
               </button>
             )}
 
@@ -519,7 +578,8 @@ const UnitScreen = () => {
                 }}
               >
                 <NotePencil size={16} weight="bold" />
-                Speaking Practice · {speakingPaper.timeLimitMinutes} min
+                {getPaperLabel(examType, "SPEAKING", courseData?.courseName)}
+                {speakingPaper.timeLimitMinutes ? ` · ${speakingPaper.timeLimitMinutes} min` : ""}
               </button>
             )}
 
@@ -549,7 +609,8 @@ const UnitScreen = () => {
                 }}
               >
                 <NotePencil size={16} weight="bold" />
-                Multi-essay · {multiEssayPaper.timeLimitMinutes} min
+                {getPaperLabel(examType, "MULTI_ESSAY", courseData?.courseName)}
+                {multiEssayPaper.timeLimitMinutes ? ` · ${multiEssayPaper.timeLimitMinutes} min` : ""}
               </button>
             )}
           </div>
