@@ -231,15 +231,18 @@ const IELTSListeningTest = ({ session }) => {
   const utteranceRef = useRef(null);
 
   useEffect(() => {
+    let cancelled = false;
     TestsApi.getQuestions(testId)
       .then(res => {
+        if (cancelled) return;
         setGroups(buildGroups(res.data));
         const saved = {};
         res.data.forEach(q => { if (q.userResponse) saved[q.quizId] = q.userResponse; });
         setAnswers(saved);
       })
-      .catch(err => console.error("Could not load questions:", err))
-      .finally(() => setLoading(false));
+      .catch(err => { if (!cancelled) console.error("Could not load questions:", err); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [testId]);
 
   useEffect(() => {

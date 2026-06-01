@@ -17,8 +17,8 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate }  from "react-router-dom";
-import { BookOpen, ChartBar, Trophy, SignOut, CheckCircle, ArrowRight, GraduationCap, ArrowSquareOut, Pencil, Key, Trash } from "@phosphor-icons/react";
-import { ProgressApi, UserApi } from "../../api/index.js";
+import { BookOpen, ChartBar, Trophy, SignOut, CheckCircle, ArrowRight, GraduationCap, GearSix, ArrowClockwise } from "@phosphor-icons/react";
+import { ProgressApi, TestsApi } from "../../api/index.js";
 import useAuth          from "../../hooks/useAuth.js";
 import AppHeader        from "../../components/common/appHeader.jsx";
 import AppFooter        from "../../components/common/appFooter.jsx";
@@ -65,7 +65,7 @@ const ProgressBar = ({ value, color = MINT }) => (
 
 // ── Course progress card ──────────────────────────────────────────────────────
 
-const CourseProgressCard = ({ course, index, examName }) => {
+const CourseProgressCard = ({ course, index, examName, practicedPapers = [] }) => {
   const navigate = useNavigate();
   const pass        = course.passPercentage ?? 0;
   const color       = gradeColor(pass);
@@ -160,7 +160,44 @@ const CourseProgressCard = ({ course, index, examName }) => {
         />
       </div>
 
-      {/* Retake / study again button */}
+      {/* Practice Again — papers practiced previously */}
+      {practicedPapers.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <p style={{ fontFamily: SERIF, fontSize: 10, fontWeight: 700,
+            color: "#94A3B8", letterSpacing: "0.12em", textTransform: "uppercase", margin: 0 }}>
+            Practice Again
+          </p>
+          {practicedPapers.map(paper => (
+            <button
+              key={paper.paperId}
+              onClick={() => navigate("/test", { state: { courseId: course.courseId, paperId: paper.paperId } })}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "7px 12px", borderRadius: 8,
+                border: "1px solid #E2EBF0", background: "#F8FAFC",
+                cursor: "pointer", fontFamily: SERIF, fontSize: 12,
+                fontWeight: 600, color: "#64748B",
+                transition: "border-color 0.15s, color 0.15s, background 0.15s",
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = BRAND;
+                e.currentTarget.style.color = BRAND;
+                e.currentTarget.style.background = "#e8f7f9";
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = "#E2EBF0";
+                e.currentTarget.style.color = "#64748B";
+                e.currentTarget.style.background = "#F8FAFC";
+              }}
+            >
+              <span>{paper.paperName}</span>
+              <ArrowClockwise size={13} weight="bold" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Continue studying / Study again button */}
       <button
         onClick={() => navigate("/units", { state: { courseId: course.courseId, examType: examName } })}
         style={{
@@ -221,70 +258,30 @@ const SkeletonCard = ({ i }) => (
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { username, email, userId, clearSession, saveSession } = useAuth();
+  const { username, email, userId, clearSession } = useAuth();
 
   const handleLogout = () => { clearSession(); navigate("/"); };
 
-  // ── Modal state ───────────────────────────────────────────────────────────
-  const [editModal, setEditModal] = useState({
-    open: false, username: "", email: "", loading: false, error: null,
-  });
-  const [passwordModal, setPasswordModal] = useState({
-    open: false, current: "", next: "", confirm: "", loading: false, error: null,
-  });
-  const [deleteModal, setDeleteModal] = useState({
-    open: false, loading: false, error: null,
-  });
-
-  const openEditModal = () =>
-    setEditModal({ open: true, username: username ?? "", email: email ?? "", loading: false, error: null });
-
-  const handleUpdateProfile = () => {
-    if (!editModal.username.trim() || !editModal.email.trim()) {
-      setEditModal(m => ({ ...m, error: "All fields are required" }));
-      return;
-    }
-    setEditModal(m => ({ ...m, loading: true, error: null }));
-    UserApi.updateProfile(editModal.username.trim(), editModal.email.trim())
-      .then(res => { saveSession(res.data); setEditModal(m => ({ ...m, open: false })); })
-      .catch(err => setEditModal(m => ({ ...m, loading: false, error: err.message ?? "Something went wrong" })));
-  };
-
-  const handleUpdatePassword = () => {
-    if (!passwordModal.current || !passwordModal.next || !passwordModal.confirm) {
-      setPasswordModal(m => ({ ...m, error: "All fields are required" }));
-      return;
-    }
-    if (passwordModal.next !== passwordModal.confirm) {
-      setPasswordModal(m => ({ ...m, error: "New passwords do not match" }));
-      return;
-    }
-    if (passwordModal.next.length < 6) {
-      setPasswordModal(m => ({ ...m, error: "Password must be at least 6 characters" }));
-      return;
-    }
-    setPasswordModal(m => ({ ...m, loading: true, error: null }));
-    UserApi.updatePassword(passwordModal.current, passwordModal.next)
-      .then(() => setPasswordModal({ open: false, current: "", next: "", confirm: "", loading: false, error: null }))
-      .catch(err => setPasswordModal(m => ({ ...m, loading: false, error: err.message ?? "Something went wrong" })));
-  };
-
-  const handleDeleteAccount = () => {
-    setDeleteModal(m => ({ ...m, loading: true, error: null }));
-    UserApi.deleteAccount()
-      .then(() => { clearSession(); navigate("/"); })
-      .catch(err => setDeleteModal(m => ({ ...m, loading: false, error: err.message ?? "Something went wrong" })));
-  };
-
   const [examProgress,    setExamProgress]    = useState([]);
+  const [historyByCourse, setHistoryByCourse] = useState({});
   const [loading,         setLoading]         = useState(true);
   const [error,           setError]           = useState(false);
   const [myALevelCourses, setMyALevelCourses] = useState(new Set());
 
   useEffect(() => {
-    ProgressApi.getMyProgress()
-      .then(res => {
-        if (Array.isArray(res.data)) setExamProgress(res.data);
+    Promise.all([ProgressApi.getMyProgress(), TestsApi.getHistory()])
+      .then(([progressRes, historyRes]) => {
+        if (Array.isArray(progressRes.data)) setExamProgress(progressRes.data);
+        if (Array.isArray(historyRes.data)) {
+          const map = {};
+          historyRes.data.forEach(t => {
+            if (!t.courseId || !t.paperId) return;
+            if (!map[t.courseId]) map[t.courseId] = [];
+            const exists = map[t.courseId].some(p => p.paperId === t.paperId);
+            if (!exists) map[t.courseId].push({ paperId: t.paperId, paperName: t.paperName });
+          });
+          setHistoryByCourse(map);
+        }
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -340,12 +337,11 @@ const Profile = () => {
         {/* Account action buttons — absolute top-right */}
         <div style={{
           position: "absolute", top: 24, right: 24, zIndex: 2,
-          display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end",
+          display: "flex", gap: 8,
         }}>
           {[
-            { label: "Edit profile",     icon: <Pencil size={15} weight="bold" />, onClick: openEditModal },
-            { label: "Change password",  icon: <Key    size={15} weight="bold" />, onClick: () => setPasswordModal(m => ({ ...m, open: true })) },
-            { label: "Sign out",         icon: <SignOut size={15} weight="bold" />, onClick: handleLogout },
+            { label: "Settings", icon: <GearSix size={15} weight="bold" />, onClick: () => navigate("/settings") },
+            { label: "Sign out", icon: <SignOut  size={15} weight="bold" />, onClick: handleLogout },
           ].map(({ label, icon, onClick }) => (
             <button
               key={label}
@@ -483,6 +479,7 @@ const Profile = () => {
                       course={course}
                       index={ci}
                       examName={aLevelExamName}
+                      practicedPapers={historyByCourse[course.courseId] ?? []}
                     />
                   ))}
                 </div>
@@ -596,6 +593,7 @@ const Profile = () => {
                       course={course}
                       index={ei * 10 + ci}
                       examName={exam.examName}
+                      practicedPapers={historyByCourse[course.courseId] ?? []}
                     />
                   ))}
                 </div>
@@ -604,278 +602,6 @@ const Profile = () => {
           ))
         )}
       </main>
-
-      {/* ── Danger zone ── */}
-      <div style={{ maxWidth: 1048, margin: "0 auto", width: "100%", padding: "0 48px 80px", boxSizing: "border-box" }}>
-        <div style={{ borderTop: "1px solid #FECACA", paddingTop: 32 }}>
-          <p style={{
-            fontFamily: SERIF, fontSize: 11, fontWeight: 700,
-            letterSpacing: "0.14em", textTransform: "uppercase",
-            color: "#EF4444", marginBottom: 16,
-          }}>
-            Danger zone
-          </p>
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            flexWrap: "wrap", gap: 16,
-            background: "#fff0f0", borderRadius: 16,
-            padding: "20px 24px", border: "1px solid #FECACA",
-          }}>
-            <div>
-              <p style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 700, color: "#0F172A", margin: 0, marginBottom: 4 }}>
-                Delete account
-              </p>
-              <p style={{ fontFamily: SERIF, fontSize: 13, color: "#94A3B8", margin: 0 }}>
-                This action is permanent. All your progress and data will be erased.
-              </p>
-            </div>
-            <button
-              onClick={() => setDeleteModal({ open: true, loading: false, error: null })}
-              style={{
-                display: "flex", alignItems: "center", gap: 8,
-                fontFamily: SERIF, fontSize: 13, fontWeight: 700,
-                color: "#fff", background: "#EF4444",
-                border: "none", borderRadius: 10, padding: "10px 20px",
-                cursor: "pointer", transition: "all 0.18s", flexShrink: 0,
-                boxShadow: "0 4px 12px rgba(239,68,68,0.3)",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = "#DC2626"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "#EF4444"; }}
-            >
-              <Trash size={15} weight="bold" />
-              Delete account
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Edit profile modal ── */}
-      {editModal.open && (
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 1000,
-          background: "rgba(6,47,55,0.55)", backdropFilter: "blur(4px)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          padding: 24,
-        }}>
-          <div style={{
-            background: "#fff", borderRadius: 24, padding: 36,
-            width: "100%", maxWidth: 420,
-            boxShadow: "0 24px 64px rgba(6,47,55,0.18)",
-            animation: "profFadeUp 0.25s ease both",
-          }}>
-            <h2 style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 700, color: DARK, margin: "0 0 6px" }}>
-              Edit profile
-            </h2>
-            <p style={{ fontFamily: SERIF, fontSize: 13, color: "#94A3B8", margin: "0 0 28px" }}>
-              Update your username or email address.
-            </p>
-
-            {["username", "email"].map(field => (
-              <div key={field} style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontFamily: SERIF, fontSize: 11, fontWeight: 700,
-                  letterSpacing: "0.1em", textTransform: "uppercase", color: "#64748B", marginBottom: 6 }}>
-                  {field === "username" ? "Username" : "Email address"}
-                </label>
-                <input
-                  type={field === "email" ? "email" : "text"}
-                  value={editModal[field]}
-                  onChange={e => setEditModal(m => ({ ...m, [field]: e.target.value }))}
-                  style={{
-                    width: "100%", boxSizing: "border-box",
-                    fontFamily: SERIF, fontSize: 14, color: DARK,
-                    border: "1.5px solid #E2EBF0", borderRadius: 10,
-                    padding: "10px 14px", outline: "none",
-                    transition: "border-color 0.18s",
-                  }}
-                  onFocus={e => { e.currentTarget.style.borderColor = BRAND; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "#E2EBF0"; }}
-                />
-              </div>
-            ))}
-
-            {editModal.error && (
-              <p style={{ fontFamily: SERIF, fontSize: 13, color: "#EF4444", margin: "0 0 16px" }}>
-                {editModal.error}
-              </p>
-            )}
-
-            <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-              <button
-                onClick={() => setEditModal(m => ({ ...m, open: false }))}
-                style={{
-                  flex: 1, fontFamily: SERIF, fontSize: 14, fontWeight: 700,
-                  color: "#64748B", background: "#F1F5F9",
-                  border: "none", borderRadius: 10, padding: "12px 0",
-                  cursor: "pointer",
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdateProfile}
-                disabled={editModal.loading}
-                style={{
-                  flex: 2, fontFamily: SERIF, fontSize: 14, fontWeight: 700,
-                  color: "#fff", background: editModal.loading ? "#94A3B8" : BRAND,
-                  border: "none", borderRadius: 10, padding: "12px 0",
-                  cursor: editModal.loading ? "not-allowed" : "pointer",
-                  transition: "background 0.18s",
-                }}
-              >
-                {editModal.loading ? "Saving…" : "Save changes"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Change password modal ── */}
-      {passwordModal.open && (
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 1000,
-          background: "rgba(6,47,55,0.55)", backdropFilter: "blur(4px)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          padding: 24,
-        }}>
-          <div style={{
-            background: "#fff", borderRadius: 24, padding: 36,
-            width: "100%", maxWidth: 420,
-            boxShadow: "0 24px 64px rgba(6,47,55,0.18)",
-            animation: "profFadeUp 0.25s ease both",
-          }}>
-            <h2 style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 700, color: DARK, margin: "0 0 6px" }}>
-              Change password
-            </h2>
-            <p style={{ fontFamily: SERIF, fontSize: 13, color: "#94A3B8", margin: "0 0 28px" }}>
-              Enter your current password and choose a new one.
-            </p>
-
-            {[
-              { key: "current", label: "Current password" },
-              { key: "next",    label: "New password" },
-              { key: "confirm", label: "Confirm new password" },
-            ].map(({ key, label }) => (
-              <div key={key} style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontFamily: SERIF, fontSize: 11, fontWeight: 700,
-                  letterSpacing: "0.1em", textTransform: "uppercase", color: "#64748B", marginBottom: 6 }}>
-                  {label}
-                </label>
-                <input
-                  type="password"
-                  value={passwordModal[key]}
-                  onChange={e => setPasswordModal(m => ({ ...m, [key]: e.target.value }))}
-                  style={{
-                    width: "100%", boxSizing: "border-box",
-                    fontFamily: SERIF, fontSize: 14, color: DARK,
-                    border: "1.5px solid #E2EBF0", borderRadius: 10,
-                    padding: "10px 14px", outline: "none",
-                    transition: "border-color 0.18s",
-                  }}
-                  onFocus={e => { e.currentTarget.style.borderColor = BRAND; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "#E2EBF0"; }}
-                />
-              </div>
-            ))}
-
-            {passwordModal.error && (
-              <p style={{ fontFamily: SERIF, fontSize: 13, color: "#EF4444", margin: "0 0 16px" }}>
-                {passwordModal.error}
-              </p>
-            )}
-
-            <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-              <button
-                onClick={() => setPasswordModal(m => ({ ...m, open: false }))}
-                style={{
-                  flex: 1, fontFamily: SERIF, fontSize: 14, fontWeight: 700,
-                  color: "#64748B", background: "#F1F5F9",
-                  border: "none", borderRadius: 10, padding: "12px 0",
-                  cursor: "pointer",
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdatePassword}
-                disabled={passwordModal.loading}
-                style={{
-                  flex: 2, fontFamily: SERIF, fontSize: 14, fontWeight: 700,
-                  color: "#fff", background: passwordModal.loading ? "#94A3B8" : BRAND,
-                  border: "none", borderRadius: 10, padding: "12px 0",
-                  cursor: passwordModal.loading ? "not-allowed" : "pointer",
-                  transition: "background 0.18s",
-                }}
-              >
-                {passwordModal.loading ? "Updating…" : "Update password"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Delete account confirmation modal ── */}
-      {deleteModal.open && (
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 1000,
-          background: "rgba(6,47,55,0.55)", backdropFilter: "blur(4px)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          padding: 24,
-        }}>
-          <div style={{
-            background: "#fff", borderRadius: 24, padding: 36,
-            width: "100%", maxWidth: 400,
-            boxShadow: "0 24px 64px rgba(6,47,55,0.18)",
-            animation: "profFadeUp 0.25s ease both",
-          }}>
-            <div style={{
-              width: 48, height: 48, borderRadius: 14, marginBottom: 20,
-              background: "rgba(239,68,68,0.1)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <Trash size={22} weight="bold" color="#EF4444" />
-            </div>
-            <h2 style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 700, color: DARK, margin: "0 0 10px" }}>
-              Delete account?
-            </h2>
-            <p style={{ fontFamily: SERIF, fontSize: 14, color: "#64748B", margin: "0 0 28px", lineHeight: 1.6 }}>
-              This will permanently delete your account and all associated progress. This action cannot be undone.
-            </p>
-
-            {deleteModal.error && (
-              <p style={{ fontFamily: SERIF, fontSize: 13, color: "#EF4444", margin: "0 0 16px" }}>
-                {deleteModal.error}
-              </p>
-            )}
-
-            <div style={{ display: "flex", gap: 10 }}>
-              <button
-                onClick={() => setDeleteModal(m => ({ ...m, open: false }))}
-                style={{
-                  flex: 1, fontFamily: SERIF, fontSize: 14, fontWeight: 700,
-                  color: "#64748B", background: "#F1F5F9",
-                  border: "none", borderRadius: 10, padding: "12px 0",
-                  cursor: "pointer",
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteAccount}
-                disabled={deleteModal.loading}
-                style={{
-                  flex: 2, fontFamily: SERIF, fontSize: 14, fontWeight: 700,
-                  color: "#fff", background: deleteModal.loading ? "#94A3B8" : "#EF4444",
-                  border: "none", borderRadius: 10, padding: "12px 0",
-                  cursor: deleteModal.loading ? "not-allowed" : "pointer",
-                  transition: "background 0.18s",
-                }}
-              >
-                {deleteModal.loading ? "Deleting…" : "Yes, delete my account"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <AppFooter />
     </div>

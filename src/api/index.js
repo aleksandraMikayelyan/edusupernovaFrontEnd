@@ -119,6 +119,13 @@ export const TestsApi = {
     client.get(`/tests/${testId}/report`),
 
   /**
+   * Force-completes the test and returns FeedBackDTO.
+   * Unanswered questions receive score 0. Safe to call even when time has expired.
+   */
+  submit: (testId) =>
+    client.post(`/tests/${testId}/submit`),
+
+  /**
    * Returns DailyStatusDTO { usedToday, limit, isPremium }.
    * Call on TestPage mount to enforce free-tier daily cap.
    */

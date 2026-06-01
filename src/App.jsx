@@ -33,6 +33,7 @@ import Test          from "./screens/test/Test.jsx";
 import FeedbackPage     from "./screens/dashboard/FeedbackPage.jsx";
 import Profile          from "./screens/dashboard/Profile.jsx";
 import TestHistoryPage  from "./screens/dashboard/TestHistoryPage.jsx";
+import Settings         from "./screens/dashboard/Settings.jsx";
 
 // ── Admin screens ─────────────────────────────────────────────────────────────
 import AdminInterface from "./screens/admin/AdminInterface.jsx";
@@ -76,6 +77,7 @@ const AppRoutes = () => (
     <Route path="/feedback" element={<ProtectedRoute studentOnly><FeedbackPage /></ProtectedRoute>} />
     <Route path="/profile"  element={<ProtectedRoute studentOnly><Profile /></ProtectedRoute>} />
     <Route path="/history"  element={<ProtectedRoute studentOnly><TestHistoryPage /></ProtectedRoute>} />
+    <Route path="/settings" element={<ProtectedRoute studentOnly><Settings /></ProtectedRoute>} />
 
     {/* ── Admin (protected + role check) ── */}
     <Route path="/admin"    element={<ProtectedRoute adminOnly><AdminInterface /></ProtectedRoute>} />

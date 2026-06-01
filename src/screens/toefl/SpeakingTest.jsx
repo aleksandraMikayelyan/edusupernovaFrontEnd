@@ -543,15 +543,18 @@ const SpeakingTest = ({ session }) => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     TestsApi.getQuestions(testId)
       .then(res => {
+        if (cancelled) return;
         setGroups(buildGroups(res.data));
         const saved = {};
         res.data.forEach(q => { if (q.userResponse) saved[q.quizId] = q.userResponse; });
         setTranscripts(saved);
       })
-      .catch(err => console.error("Could not load questions:", err))
-      .finally(() => setLoading(false));
+      .catch(err => { if (!cancelled) console.error("Could not load questions:", err); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [testId]);
 
   const currentGroup = groups[groupIndex];
@@ -620,6 +623,19 @@ const SpeakingTest = ({ session }) => {
         remainingSeconds={session.remainingSeconds}
         onLeave={() => navigate("/courses")}
       />
+
+      {!SR_SUPPORTED && (
+        <div style={{
+          background: "#fffbeb", borderBottom: "1px solid #fcd34d",
+          padding: "10px 24px", display: "flex", alignItems: "center", gap: 10,
+        }}>
+          <WarningCircle size={18} weight="fill" color="#d97706" />
+          <span style={{ fontFamily: SERIF, fontSize: 13, color: "#92400e" }}>
+            Voice recording requires <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong>.
+            Your browser is not supported — you can still type your answers in the text fields below.
+          </span>
+        </div>
+      )}
 
       <div style={{ flex: 1, overflowY: "auto", display: "flex", justifyContent: "center" }}>
         <div style={{

@@ -178,8 +178,10 @@ const DataResponseTest = ({ session }) => {
 
   // Fetch all questions on mount, build groups, pre-fill saved answers
   useEffect(() => {
+    let cancelled = false;
     TestsApi.getQuestions(testId)
       .then(res => {
+        if (cancelled) return;
         const built = buildGroups(res.data);
         setGroups(built);
         // Pre-fill with any already-saved responses
@@ -187,8 +189,9 @@ const DataResponseTest = ({ session }) => {
         res.data.forEach(q => { if (q.userResponse) saved[q.quizId] = q.userResponse; });
         setAnswers(saved);
       })
-      .catch(err => console.error("Could not load questions:", err))
-      .finally(() => setLoading(false));
+      .catch(err => { if (!cancelled) console.error("Could not load questions:", err); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [testId]);
 
   // Reset to "Passage" tab when switching groups on mobile
@@ -227,13 +230,18 @@ const DataResponseTest = ({ session }) => {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      await Promise.all(
+      // Best-effort save of all current answers (failures are tolerated)
+      await Promise.allSettled(
         groups.flatMap(group =>
           group.questions.map(q =>
-            TestsApi.submitAnswer(testId, q.quizId, answers[q.quizId] ?? "")
+            answers[q.quizId]?.trim()
+              ? TestsApi.submitAnswer(testId, q.quizId, answers[q.quizId])
+              : Promise.resolve()
           )
         )
       );
+      // Force-complete the test server-side then go to results
+      await TestsApi.submit(testId);
       navigate("/feedback", { state: { testId }, replace: true });
     } catch (err) {
       console.error("Submit failed:", err);

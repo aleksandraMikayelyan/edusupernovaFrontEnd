@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowClockwise, Trophy, Clock, CheckSquare } from "@phosphor-icons/react";
+import { ArrowLeft, ArrowClockwise, Trophy, Clock, CheckSquare, Play } from "@phosphor-icons/react";
 import { TestsApi } from "../../api/index.js";
 import AppHeader     from "../../components/common/appHeader.jsx";
 import AppFooter     from "../../components/common/appFooter.jsx";
@@ -33,6 +33,14 @@ const gradeBg = (grade) => {
   return "#F1F5F9";
 };
 
+const statusConfig = (status) => {
+  switch ((status ?? "COMPLETED").toUpperCase()) {
+    case "IN_PROGRESS": return { label: "In Progress", color: "#d97706", bg: "#fffbeb", border: "#fcd34d" };
+    case "ABANDONED":   return { label: "Abandoned",   color: "#94A3B8", bg: "#F8FAFC", border: "#E2EBF0" };
+    default:            return { label: "Completed",   color: "#15803d", bg: "#f0fdf4", border: "#86efac" };
+  }
+};
+
 const formatDate = (iso) => {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString(undefined, {
@@ -49,8 +57,11 @@ const formatDuration = (secs) => {
 
 // ── Single row ────────────────────────────────────────────────────────────────
 
-const HistoryRow = ({ test, onRetake, onReview }) => {
-  const score = test.finalScore != null ? Math.round(test.finalScore) : null;
+const HistoryRow = ({ test, onRetake, onResume, onReview }) => {
+  const score   = test.finalScore != null ? Math.round(test.finalScore) : null;
+  const status  = (test.status ?? "COMPLETED").toUpperCase();
+  const sConf   = statusConfig(status);
+  const isInProgress = status === "IN_PROGRESS";
 
   return (
     <div style={{
@@ -67,31 +78,36 @@ const HistoryRow = ({ test, onRetake, onReview }) => {
         background: gradeBg(test.grade),
         display: "flex", alignItems: "center", justifyContent: "center",
       }}>
-        <span style={{
-          fontFamily: SERIF, fontSize: 18, fontWeight: 800,
-          color: gradeColor(test.grade),
-        }}>
+        <span style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 800, color: gradeColor(test.grade) }}>
           {test.grade ?? "—"}
         </span>
       </div>
 
       {/* Info */}
       <div style={{ flex: 1, minWidth: 200 }}>
-        <p style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 700,
-          color: DARK, margin: "0 0 3px" }}>
+        <p style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 700, color: DARK, margin: "0 0 4px" }}>
           {test.paperName ?? test.courseName}
         </p>
-        <p style={{ fontFamily: SERIF, fontSize: 12, color: "#64748B", margin: 0 }}>
-          {test.courseName}
-          {test.paperName && test.courseName !== test.paperName ? ` · ${test.paperName}` : ""}
-        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <p style={{ fontFamily: SERIF, fontSize: 12, color: "#64748B", margin: 0 }}>
+            {test.courseName}
+            {test.paperName && test.courseName !== test.paperName ? ` · ${test.paperName}` : ""}
+          </p>
+          <span style={{
+            fontFamily: SERIF, fontSize: 11, fontWeight: 700,
+            color: sConf.color, background: sConf.bg,
+            border: `1px solid ${sConf.border}`,
+            borderRadius: 6, padding: "2px 8px",
+          }}>
+            {sConf.label}
+          </span>
+        </div>
       </div>
 
       {/* Stats */}
       <div style={{ display: "flex", gap: 20, flexShrink: 0 }}>
         <div style={{ textAlign: "center" }}>
-          <p style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 700,
-            color: BRAND, margin: 0 }}>
+          <p style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 700, color: BRAND, margin: 0 }}>
             {score != null ? `${score}%` : "—"}
           </p>
           <p style={{ fontFamily: SERIF, fontSize: 10, color: "#94A3B8",
@@ -100,8 +116,7 @@ const HistoryRow = ({ test, onRetake, onReview }) => {
           </p>
         </div>
         <div style={{ textAlign: "center" }}>
-          <p style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 700,
-            color: DARK, margin: 0 }}>
+          <p style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 700, color: DARK, margin: 0 }}>
             {test.totalCorrect ?? 0}/{test.totalQuestions ?? 0}
           </p>
           <p style={{ fontFamily: SERIF, fontSize: 10, color: "#94A3B8",
@@ -110,8 +125,7 @@ const HistoryRow = ({ test, onRetake, onReview }) => {
           </p>
         </div>
         <div style={{ textAlign: "center" }}>
-          <p style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 600,
-            color: "#64748B", margin: 0 }}>
+          <p style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 600, color: "#64748B", margin: 0 }}>
             {formatDuration(test.durationSeconds)}
           </p>
           <p style={{ fontFamily: SERIF, fontSize: 10, color: "#94A3B8",
@@ -121,7 +135,7 @@ const HistoryRow = ({ test, onRetake, onReview }) => {
         </div>
         <div style={{ textAlign: "center" }}>
           <p style={{ fontFamily: SERIF, fontSize: 12, color: "#94A3B8", margin: 0 }}>
-            {formatDate(test.completedAt)}
+            {formatDate(test.completedAt ?? test.startedAt)}
           </p>
           <p style={{ fontFamily: SERIF, fontSize: 10, color: "#94A3B8",
             textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
@@ -132,19 +146,36 @@ const HistoryRow = ({ test, onRetake, onReview }) => {
 
       {/* Actions */}
       <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-        <button onClick={() => onReview(test.testId)}
-          style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "8px 16px", borderRadius: 10, border: `1.5px solid #E2EBF0`,
-            background: "transparent", cursor: "pointer",
-            fontFamily: SERIF, fontSize: 13, fontWeight: 600, color: "#64748B",
-            transition: "border-color 0.15s, color 0.15s",
-          }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = BRAND; e.currentTarget.style.color = BRAND; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = "#E2EBF0"; e.currentTarget.style.color = "#64748B"; }}>
-          <CheckSquare size={14} /> Review
-        </button>
-        {test.paperId && (
+        {!isInProgress && (
+          <button onClick={() => onReview(test.testId)}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "8px 16px", borderRadius: 10, border: "1.5px solid #E2EBF0",
+              background: "transparent", cursor: "pointer",
+              fontFamily: SERIF, fontSize: 13, fontWeight: 600, color: "#64748B",
+              transition: "border-color 0.15s, color 0.15s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = BRAND; e.currentTarget.style.color = BRAND; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#E2EBF0"; e.currentTarget.style.color = "#64748B"; }}>
+            <CheckSquare size={14} /> Review
+          </button>
+        )}
+        {isInProgress && test.courseId && (
+          <button onClick={() => onResume(test)}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "8px 16px", borderRadius: 10, border: "none",
+              background: "#d97706", cursor: "pointer",
+              fontFamily: SERIF, fontSize: 13, fontWeight: 700, color: "#fff",
+              boxShadow: "0 4px 12px rgba(217,119,6,0.3)",
+              transition: "background 0.15s, transform 0.15s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "#b45309"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "#d97706"; e.currentTarget.style.transform = "none"; }}>
+            <Play size={14} weight="fill" /> Resume
+          </button>
+        )}
+        {!isInProgress && test.paperId && (
           <button onClick={() => onRetake(test)}
             style={{
               display: "flex", alignItems: "center", gap: 6,
@@ -180,6 +211,10 @@ const TestHistoryPage = () => {
   }, []);
 
   const handleRetake = (test) => {
+    navigate("/test", { state: { courseId: test.courseId, paperId: test.paperId } });
+  };
+
+  const handleResume = (test) => {
     navigate("/test", { state: { courseId: test.courseId, paperId: test.paperId } });
   };
 
@@ -223,7 +258,7 @@ const TestHistoryPage = () => {
               </h1>
               <p style={{ fontFamily: SERIF, fontSize: 14,
                 color: "rgba(255,255,255,0.45)", margin: "6px 0 0" }}>
-                {tests.length} completed test{tests.length !== 1 ? "s" : ""}
+                {tests.length} test{tests.length !== 1 ? "s" : ""}
               </p>
             </div>
           </div>
@@ -265,6 +300,7 @@ const TestHistoryPage = () => {
               key={test.testId}
               test={test}
               onRetake={handleRetake}
+              onResume={handleResume}
               onReview={handleReview}
             />
           ))

@@ -194,8 +194,10 @@ const SATMathTest = ({ session }) => {
   const [submitError, setSubmitError] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
     TestsApi.getQuestions(testId)
       .then(res => {
+        if (cancelled) return;
         const sorted = [...res.data].sort(
           (a, b) => (a.questionNumber ?? 0) - (b.questionNumber ?? 0)
         );
@@ -204,8 +206,9 @@ const SATMathTest = ({ session }) => {
         sorted.forEach((q, i) => { if (q.userResponse) saved[i] = q.userResponse; });
         setAnswers(saved);
       })
-      .catch(err => console.error("Could not load questions:", err))
-      .finally(() => setLoading(false));
+      .catch(err => { if (!cancelled) console.error("Could not load questions:", err); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [testId]);
 
   const total   = questions.length;

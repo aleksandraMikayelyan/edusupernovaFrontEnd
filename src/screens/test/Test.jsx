@@ -151,14 +151,17 @@ const TestScreen = () => {
 
   useEffect(() => {
     if (!courseId) { setError("No course selected."); setLoading(false); return; }
+    let cancelled = false;
     TestsApi.start(courseId, paperId, unitId)
       .then(res => {
+        if (cancelled) return;
         const { currentQuestion, ...meta } = res.data;
         setSession(meta);
         setQuestion(currentQuestion);
       })
-      .catch(err => setError(err.message ?? "Could not start the test."))
-      .finally(() => setLoading(false));
+      .catch(err => { if (!cancelled) setError(err.message ?? "Could not start the test."); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [courseId]);
 
   const handleSubmit = async () => {
@@ -188,7 +191,7 @@ const TestScreen = () => {
 
   const confirmLeave = (dest) => {
     setDrawerOpen(false);
-    if (window.confirm("Leave the test? Your progress will be lost.")) navigate(dest);
+    if (window.confirm("Leave the test? It will be saved as In Progress in your history — you can resume it later.")) navigate(dest);
   };
 
   // ── Loading / error states ─────────────────────────────────────────────────

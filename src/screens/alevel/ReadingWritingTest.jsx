@@ -245,8 +245,10 @@ const ReadingWritingTest = ({ session }) => {
 
   // Fetch all questions, sort by questionNumber, pre-fill saved answers
   useEffect(() => {
+    let cancelled = false;
     TestsApi.getQuestions(testId)
       .then(res => {
+        if (cancelled) return;
         const sorted = [...res.data].sort(
           (a, b) => (a.questionNumber ?? 0) - (b.questionNumber ?? 0)
         );
@@ -256,8 +258,9 @@ const ReadingWritingTest = ({ session }) => {
         res.data.forEach(q => { if (q.userResponse) saved[q.quizId] = q.userResponse; });
         setAnswers(saved);
       })
-      .catch(err => console.error("Could not load questions:", err))
-      .finally(() => setLoading(false));
+      .catch(err => { if (!cancelled) console.error("Could not load questions:", err); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [testId]);
 
   const setAnswer = useCallback((quizId, value) => {

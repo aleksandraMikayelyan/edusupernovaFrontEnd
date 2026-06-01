@@ -125,8 +125,10 @@ const EssayTest = ({ session }) => {
 
   // Fetch all essay questions and pre-fill
   useEffect(() => {
+    let cancelled = false;
     TestsApi.getQuestions(testId)
       .then(res => {
+        if (cancelled) return;
         // Sort by questionNumber for linear order
         const sorted = [...res.data].sort(
           (a, b) => (a.questionNumber ?? 0) - (b.questionNumber ?? 0)
@@ -136,8 +138,9 @@ const EssayTest = ({ session }) => {
         res.data.forEach(q => { if (q.userResponse) saved[q.quizId] = q.userResponse; });
         setAnswers(saved);
       })
-      .catch(err => console.error("Could not load questions:", err))
-      .finally(() => setLoading(false));
+      .catch(err => { if (!cancelled) console.error("Could not load questions:", err); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [testId]);
 
   const currentQ   = questions[essayIndex];
