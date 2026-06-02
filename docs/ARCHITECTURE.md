@@ -294,6 +294,7 @@ com.edusupernova.edusupernova/
 
 ## Database Schema
 
+```
 erDiagram
     Users {
         bigint id PK
