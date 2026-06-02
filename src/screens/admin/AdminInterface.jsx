@@ -9,9 +9,10 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   PlusCircle, Trash, House, CheckCircle, WarningCircle,
-  CircleNotch, ShieldCheck, Rows, FilePdf,
+  CircleNotch, ShieldCheck, Rows, FilePdf, SignOut,
 } from "@phosphor-icons/react";
 import { AdminApi } from "../../api/index.js";
+import { useAuth } from "../../context/AuthContext.jsx";
 
 const DARK  = "#062f37";
 const BRAND = "#0a5f6e";
@@ -736,6 +737,7 @@ const TABS = [
 
 const AdminInterface = () => {
   const navigate = useNavigate();
+  const { clearSession } = useAuth();
   const [tab,   setTab]   = useState("add");
   const [exams, setExams] = useState([]);
 
@@ -768,16 +770,28 @@ const AdminInterface = () => {
             Admin panel
           </span>
         </div>
-        <button onClick={() => navigate("/courses")}
-          style={{ display: "flex", alignItems: "center", gap: 6,
-            background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
-            borderRadius: 10, padding: "7px 16px", cursor: "pointer",
-            fontFamily: SERIF, fontSize: 13, color: "rgba(255,255,255,0.7)",
-            transition: "color 0.15s, background 0.15s" }}
-          onMouseEnter={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.background = "rgba(255,255,255,0.14)"; }}
-          onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.7)"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}>
-          <House size={14} weight="light" /> Back to app
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button onClick={() => navigate("/courses")}
+            style={{ display: "flex", alignItems: "center", gap: 6,
+              background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: 10, padding: "7px 16px", cursor: "pointer",
+              fontFamily: SERIF, fontSize: 13, color: "rgba(255,255,255,0.7)",
+              transition: "color 0.15s, background 0.15s" }}
+            onMouseEnter={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.background = "rgba(255,255,255,0.14)"; }}
+            onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.7)"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}>
+            <House size={14} weight="light" /> Back to app
+          </button>
+          <button onClick={() => { clearSession(); navigate("/login"); }}
+            style={{ display: "flex", alignItems: "center", gap: 6,
+              background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: 10, padding: "7px 16px", cursor: "pointer",
+              fontFamily: SERIF, fontSize: 13, color: "rgba(255,255,255,0.7)",
+              transition: "color 0.15s, background 0.15s" }}
+            onMouseEnter={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.background = "rgba(255,255,255,0.14)"; }}
+            onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.7)"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}>
+            <SignOut size={14} weight="light" /> Log out
+          </button>
+        </div>
       </header>
 
       {/* Page content — centred */}
