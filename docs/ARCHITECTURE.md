@@ -294,7 +294,6 @@ com.edusupernova.edusupernova/
 
 ## Database Schema
 
-```mermaid
 erDiagram
     Users {
         bigint id PK
