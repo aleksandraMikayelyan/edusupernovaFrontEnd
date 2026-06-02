@@ -17,7 +17,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate }  from "react-router-dom";
-import { BookOpen, ChartBar, Trophy, SignOut, CheckCircle, ArrowRight, GraduationCap, GearSix, ArrowClockwise } from "@phosphor-icons/react";
+import { BookOpen, ChartBar, Trophy, SignOut, CheckCircle, ArrowRight, GraduationCap, GearSix, ArrowClockwise, ArrowSquareOut } from "@phosphor-icons/react";
 import { ProgressApi, TestsApi } from "../../api/index.js";
 import useAuth          from "../../hooks/useAuth.js";
 import AppHeader        from "../../components/common/appHeader.jsx";
